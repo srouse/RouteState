@@ -397,9 +397,17 @@ RouteStateRoute.prototype.toHash = function () {
 
 RouteStateRoute.prototype.toBodyClass = function () {
 	if ( RouteState.inject_body_class ) {
-		$("body").removeClass("s_");
-		$("body").removeClass("s_*");
 
+		var body_class = $('body').attr('class');
+		if ( body_class ) {
+			var classList = body_class.split(/\s+/);
+			$.each( classList, function(index, item){
+			    if ( item.indexOf( 's_' ) == 0  ) {
+			       $('body').removeClass( item );
+			    }
+			});
+		}
+		
 		var body_classes = [];
 		
 		//put pathname in there...
