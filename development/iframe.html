@@ -21,21 +21,33 @@
 			$(window).ready( function () {
 				RouteState.listenToHash();
 
-				
-				
+				$(window).on('hashchange',function() {
+					$('.reflect').html( location.hash );
+				});
 			});
 		</script>
+		
+		<style>
+			body {
+				background-color: #ddd;
+			}
+		
+			body.s_page_test {
+				background-color: #fdd;
+			}
+			body.s_page_again {
+				background-color: #dfd;
+			}
+		</style>
 	</head>
 	<body>
-	
+		<div class="reflect"></div>
 		
 		<div onclick="RouteState.merge({page:'test'})">change</div>
 		<div onclick="RouteState.merge({page:'again'})">change 2</div>
 		<div onclick="RouteState.replace({page:'test'})">change 3</div>
-		<div onclick="RouteState.toggle({last:'last'},{last:''})">change</div>
-		
-		
-		<iframe src="iframe.html" style="width: 500px; height: 200px;"></iframe>
+		<div onclick="RouteState.toggle({last:'last'},{last:''})">TOGGLE</div>
+
 		
 	</body>
 </html>

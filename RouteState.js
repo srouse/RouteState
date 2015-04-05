@@ -1,13 +1,8 @@
 
 /*
 
-#TODO Empty Property Classes:
-RouteState.showEmptyStates("page","tab",...);
-It will render class tags (only, no hashing) when
-no value (or "") exists in the state
-<body class="s_page_ s_tab_ ...">
-This will make it infinitely easier to have cleaner default states for 
-CSS to hook into.
+#TODO Abstract the Route object...functions are conflicting with array
+#TODO clean up references to top document...make optional?
 
 */
 
@@ -24,9 +19,18 @@ RouteState.ROUTE_CHANGE_EVENT = "ROUTE_CHANGE_EVENT";
 RouteState.listenToHash = function ( funk ) 
 {
 	var me = this;
-	$(window).on('hashchange',function() {
+	
+	var target_window = window;
+	this.document = document;
+	if ( window.top != window.self 
+			&& window.top.document.domain == window.self.document.domain ) {
+		target_window = window.top;
+		this.document = window.top.document;
+	}
+
+	$(target_window).on('hashchange',function() {
 		me.prev_route = me.route;
-    	me.route = me.routeFromPath( document.location.hash );
+    	me.route = me.routeFromPath( me.document.location.hash );
     	me.route.toBodyClass();
     	me.checkDiffListeners();
     	me.checkPropValueListeners();
@@ -34,12 +38,11 @@ RouteState.listenToHash = function ( funk )
 		if ( funk ) {
 			funk( me.route );
 	    }
-    	
 	});
 	
 	//first one to deal with...
 	this.prev_route = this.factory();
-	this.route = this.routeFromPath( document.location.hash );
+	this.route = this.routeFromPath( this.document.location.hash );
 	this.route.toBodyClass();
 	this.checkDiffListeners();
 	this.checkPropValueListeners();
@@ -251,7 +254,7 @@ RouteState.isArray = function( functionToCheck ) {
 RouteState.toPath = function ( pathname , overrides , replace_arrays ) {
 	var route = this.route.clone( overrides , replace_arrays );
 	var routeStr = route.toString();
-	document.location = pathname + document.location.search + routeStr;
+	this.document.location = pathname + this.document.location.search + routeStr;
 };
 
 RouteState.merge = function ( overrides , replace_arrays )
@@ -264,7 +267,7 @@ RouteState.merge = function ( overrides , replace_arrays )
 RouteState.toPathAndReplace = function ( pathname , state ) {
 	var route = RouteState.factory( state );
 	var routeStr = route.toString();
-	document.location = pathname + document.location.search + routeStr;
+	this.document.location = pathname + this.document.location.search + routeStr;
 };
 
 RouteState.replace = function ( state ) 
@@ -356,6 +359,14 @@ RouteState.debug = function ()
 	$("body").append("<div onclick='$(\".routestate_debug\").remove();' class='routestate_debug' style='padding: 10px; border: 1px solid grey; width:300px; background-color: #fff;position: fixed; top: 10px; left: 10px; z-index: 2000000;'>" +html.join("<br/>")+ "</div>");
 };
 
+
+
+
+
+
+
+
+
 //Route State instance....
 //RouteStateRoute
 var RouteStateRoute = function(){};
@@ -388,16 +399,24 @@ RouteStateRoute.prototype.toString = function () {
 		return "";
 	}
 };
+
 RouteStateRoute.prototype.toHash = function () {
 	this.toBodyClass();//make it happen quicker...will happen again at hash change...
 	var routeStr = this.toString();
 	//empty string will not get rid of "#", but oh well...
-	document.location.hash = routeStr;
+	var doc = document;
+	if ( 
+		window.top != window.self 
+		&& window.top.document.domain == window.self.document.domain 
+	) {
+		doc = window.top.document;
+	}
+	doc.location.hash = routeStr;
 };
 
 RouteStateRoute.prototype.toBodyClass = function () {
 	if ( RouteState.inject_body_class ) {
-
+		
 		var body_class = $('body').attr('class');
 		if ( body_class ) {
 			var classList = body_class.split(/\s+/);
@@ -412,7 +431,13 @@ RouteStateRoute.prototype.toBodyClass = function () {
 		
 		//put pathname in there...
 		//pathname always has a preceeding slash
-		body_classes.push( "s_pathname" + document.location.pathname.replace( /\//g , "_" ).replace( /\./g , "_" ) );
+		var doc = document;
+		if ( window.top != window.self 
+				&& window.top.document.domain == window.self.document.domain ) {
+			doc = window.top.document;
+		}
+		
+		body_classes.push( "s_pathname" + doc.location.pathname.replace( /\//g , "_" ).replace( /\./g , "_" ) );
 		
 		for ( var name in this ) {
 			if ( !RouteState.isFunction( this[name] ) && name.length > 0 && this[name] && String( this[name] ).length > 0 ) {
