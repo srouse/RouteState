@@ -1,0 +1,12 @@
+{
+	"name": "route-state",
+	"version": "0.1.0",
+	"main": "RouteState.js",
+	"ignore": [
+		"**/.*",
+		"development",
+		".project"
+	]
+	"dependencies": {},
+	"devDependencies": {},	
+}
