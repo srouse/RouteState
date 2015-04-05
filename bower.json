@@ -6,7 +6,7 @@
 		"**/.*",
 		"development",
 		".project"
-	]
+	],
 	"dependencies": {},
-	"devDependencies": {},	
+	"devDependencies": {}	
 }
