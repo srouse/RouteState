@@ -1,0 +1,11 @@
+{
+    "name" : "RouteState",
+        "description" : "Routing for Prototypes...serialized object for hash
+                        and class injection for body class",
+        "author" : "srouse",
+        "version" : "0.1.0",
+        "dependencies": {
+       },
+       "devDependencies" : {
+       }
+}
