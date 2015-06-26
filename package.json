@@ -2,7 +2,7 @@
     "name" : "RouteState",
         "description" : "Routing for Prototypes...serialized object for hash and class injection for body class",
         "author" : "srouse",
-        "version" : "0.2.3",
+        "version" : "0.2.4",
         "dependencies": {
        },
        "devDependencies" : {

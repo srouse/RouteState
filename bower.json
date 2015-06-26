@@ -1,6 +1,6 @@
 {
 	"name": "routestate",
-	"version": "0.2.1",
+	"version": "0.2.4",
 	"main": "RouteState.js",
 	"ignore": [
 		"**/.*",
@@ -10,5 +10,5 @@
 	"dependencies": {
 		"jquery": "~1.10.2"
 	},
-	"devDependencies": {}	
+	"devDependencies": {}
 }

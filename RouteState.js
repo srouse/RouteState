@@ -16,13 +16,13 @@ RouteState.inject_body_class = true;
 
 RouteState.ROUTE_CHANGE_EVENT = "ROUTE_CHANGE_EVENT";
 
-RouteState.listenToHash = function ( funk ) 
+RouteState.listenToHash = function ( funk )
 {
 	var me = this;
-	
+
 	var target_window = window;
 	this.document = document;
-	if ( window.top != window.self 
+	if ( window.top != window.self
 			&& window.top.document.domain == window.self.document.domain ) {
 		target_window = window.top;
 		this.document = window.top.document;
@@ -36,10 +36,10 @@ RouteState.listenToHash = function ( funk )
     	me.checkPropValueListeners();
 
 		if ( funk ) {
-			funk( me.route );
+			funk( me.route , me.prev_route );
 	    }
 	});
-	
+
 	//first one to deal with...
 	this.prev_route = this.factory();
 	this.route = this.routeFromPath( this.document.location.hash );
@@ -48,12 +48,12 @@ RouteState.listenToHash = function ( funk )
 	this.checkPropValueListeners();
 
 	if ( funk ) {
-		funk( this.route );
+		funk( this.route , this.prev_route );
 	}
 
 };
- 
-RouteState.unlistenHash = function () 
+
+RouteState.unlistenHash = function ()
 {
 	$(window).off('hashchange');
 };
@@ -62,7 +62,7 @@ RouteState.unlistenHash = function ()
 //Only show some state names relative to the state of a dependancy
 RouteState.dependencies = {};
 RouteState.saved_dependencies = {};
-RouteState.addDisplayDependency = function ( names , dependancy ) 
+RouteState.addDisplayDependency = function ( names , dependancy )
 {
 	var name;
 	for ( var i=0; i<names.length; i++ ) {
@@ -70,11 +70,11 @@ RouteState.addDisplayDependency = function ( names , dependancy )
 		if ( !this.dependencies[name] ) {
 			this.dependencies[name] = [];
 		}
-		
+
 		this.dependencies[name].push( dependancy );
 	}
 }
-RouteState.dependencyFulfilled = function ( route , name ) 
+RouteState.dependencyFulfilled = function ( route , name )
 {
 	if ( !this.dependencies[name] || !route ) {
 		return true;
@@ -97,23 +97,23 @@ RouteState.dependencyFulfilled = function ( route , name )
 
 //Diff listener
 RouteState.diffListeners = {};
-RouteState.addDiffListener = function ( prop , callback ) 
+RouteState.addDiffListener = function ( prop , callback )
 {
 	if ( !this.diffListeners[ prop ] ) {
 		this.diffListeners[ prop ] = [];
 	}
 	this.diffListeners[ prop ].push( callback );
 }
-RouteState.checkDiffListeners = function () 
+RouteState.checkDiffListeners = function ()
 {
 	if ( this.route ) {
 		var callbacks,callback,trigger_callbacks;
-		
-		
+
+
 		for ( var prop in this.diffListeners ) {
 			callbacks = this.diffListeners[prop];
 			trigger_callbacks = false;
-			
+
 			if ( this.prev_route ) {
 				if ( this.route[prop] != this.prev_route[prop] ) {
 					trigger_callbacks = true;
@@ -134,44 +134,44 @@ RouteState.checkDiffListeners = function ()
 
 
 RouteState.propValueListeners = {};
-RouteState.addPropValueListener = function ( prop , value , callback , exitcallback ) 
+RouteState.addPropValueListener = function ( prop , value , callback , exitcallback )
 {
 	if ( !this.propValueListeners[ prop ] ) {
 		this.propValueListeners[ prop ] = [];
 	}
 	this.propValueListeners[ prop ].push( {value:value,callback:callback,exitcallback:exitcallback} );
 }
-RouteState.checkPropValueListeners = function () 
+RouteState.checkPropValueListeners = function ()
 {
 	if ( this.route ) {
-		
+
 		var callbackObjs,callbackObj;
 		for ( var prop in this.propValueListeners ) {
 			callbackObjs = this.propValueListeners[prop];
 			if ( this.prev_route ) {
 				for ( var c=0; c<callbackObjs.length; c++ ) {
 					callbackObj = callbackObjs[c];
-					
+
 					//check for exit callback first...
-					if ( 
+					if (
 						callbackObj.exitcallback &&
 						this.prev_route[prop] == callbackObj.value &&
-						this.route[prop] != callbackObj.value	
+						this.route[prop] != callbackObj.value
 					) {
 						callbackObj.exitcallback( this.route , this.prev_route );
 					}
-					
-					
-					if ( 
+
+
+					if (
 						this.route[prop] == callbackObj.value &&
-						this.prev_route[prop] != callbackObj.value	
+						this.prev_route[prop] != callbackObj.value
 					) {
 						callbackObj.callback( this.route , this.prev_route );
 					}
 				}
 			}else{
 				//call them all there is no prev route....
-				
+
 				for ( var c=0; c<callbackObjs.length; c++ ) {
 					callbackObj = callbackObjs[c];
 					callbackObj.callback( this.route , this.prev_route );
@@ -185,10 +185,10 @@ RouteState.checkPropValueListeners = function ()
 
 
 
-RouteState.factory = function ( state ) 
-{	
+RouteState.factory = function ( state )
+{
 	var routeStateRoute = new RouteStateRoute();
-	
+
 	for ( var i in state ) {
 		if ( !RouteState.isFunction( i ) ) {
 			if ( RouteState.isArray( state[i] ) ) {
@@ -198,31 +198,31 @@ RouteState.factory = function ( state )
 			}
 		}
 	}
-	
-	return routeStateRoute;
-}; 
 
-RouteState.routeFromPath = function ( path ) 
+	return routeStateRoute;
+};
+
+RouteState.routeFromPath = function ( path )
 {
 	var routeStateRoute = this.factory( this.saved_dependencies );
 
 	//get rid of shebang
 	path = path.replace(/#!\//g,"");
 	path = path.replace(")","");
-	
+
 	var pathArr = path.split("/(");
-	
+
 	if ( pathArr.length < 2 ) {
 		return routeStateRoute;
 	}
-	
+
 	var names = pathArr[1];
 	var vals = pathArr[0];
-	
-	
+
+
 	var valsArr = vals.split("/");
 	var namesArr = names.split(",");
-	
+
 	var state = {};
 	var pair,name,val;
 	for ( var a=0; a<namesArr.length; a++ ) {
@@ -270,12 +270,12 @@ RouteState.toPathAndReplace = function ( pathname , state ) {
 	this.document.location = pathname + this.document.location.search + routeStr;
 };
 
-RouteState.replace = function ( state ) 
+RouteState.replace = function ( state )
 {
 	RouteState.factory( state ).toHash();
 };
 
-RouteState.toggle = function ( state , other_state , replace_arrays ) 
+RouteState.toggle = function ( state , other_state , replace_arrays )
 {
 	for ( var name in state ) {
 		if ( this.isArray( state[name] ) ) {
@@ -285,7 +285,7 @@ RouteState.toggle = function ( state , other_state , replace_arrays )
 			if ( !RouteState.isArray( this.route[name] ) ) {
 				this.route[name] = [].concat( this.route[name] );
 			}
-			
+
 			var sub_name;
 			for ( var i=0; i<state[name].length; i++ ) {
 				sub_name = state[name][i];
@@ -304,11 +304,11 @@ RouteState.toggle = function ( state , other_state , replace_arrays )
 			}
 		}
 	}
-	
+
 	this.merge( other_state , replace_arrays );
 };
 
-RouteState.toggleIfThen = function ( cond_state , if_state , then_state , replace_arrays ) 
+RouteState.toggleIfThen = function ( cond_state , if_state , then_state , replace_arrays )
 {
 	for ( var name in cond_state ) {
 		if ( this.isArray( cond_state[name] ) ) {
@@ -318,7 +318,7 @@ RouteState.toggleIfThen = function ( cond_state , if_state , then_state , replac
 			if ( !RouteState.isArray( this.route[name] ) ) {
 				this.route[name] = [].concat( this.route[name] );
 			}
-			
+
 			var sub_name;
 			for ( var i=0; i<cond_state[name].length; i++ ) {
 				sub_name = cond_state[name][i];
@@ -337,12 +337,12 @@ RouteState.toggleIfThen = function ( cond_state , if_state , then_state , replac
 			}
 		}
 	}
-	
+
 	this.merge( then_state , replace_arrays );
 };
 
 
-RouteState.debug = function () 
+RouteState.debug = function ()
 {
 	$(".routestate_debug").remove();
 	var html = ["width" + $(window).width() + "|height" + $(window).height()];
@@ -355,7 +355,7 @@ RouteState.debug = function ()
 			}
 		}
 	}
-	
+
 	$("body").append("<div onclick='$(\".routestate_debug\").remove();' class='routestate_debug' style='padding: 10px; border: 1px solid grey; width:300px; background-color: #fff;position: fixed; top: 10px; left: 10px; z-index: 2000000;'>" +html.join("<br/>")+ "</div>");
 };
 
@@ -373,7 +373,7 @@ var RouteStateRoute = function(){};
 
 RouteStateRoute.prototype.toString = function () {
 	var routeArr = ["#!"];
-	
+
 	var nameArr = [];
 	var valArr = [];
 	for ( var name in this ) {
@@ -391,7 +391,7 @@ RouteStateRoute.prototype.toString = function () {
 			}
 		}
 	}
-	
+
 	//return routeArr.join("/");
 	if ( valArr.length > 0 ) {
 		return "#!/" + valArr.join("/") + "/(" + nameArr.join(",") + ")";
@@ -405,9 +405,9 @@ RouteStateRoute.prototype.toHash = function () {
 	var routeStr = this.toString();
 	//empty string will not get rid of "#", but oh well...
 	var doc = document;
-	if ( 
-		window.top != window.self 
-		&& window.top.document.domain == window.self.document.domain 
+	if (
+		window.top != window.self
+		&& window.top.document.domain == window.self.document.domain
 	) {
 		doc = window.top.document;
 	}
@@ -416,7 +416,7 @@ RouteStateRoute.prototype.toHash = function () {
 
 RouteStateRoute.prototype.toBodyClass = function () {
 	if ( RouteState.inject_body_class ) {
-		
+
 		var body_class = $('body').attr('class');
 		if ( body_class ) {
 			var classList = body_class.split(/\s+/);
@@ -426,22 +426,22 @@ RouteStateRoute.prototype.toBodyClass = function () {
 			    }
 			});
 		}
-		
+
 		var body_classes = [];
-		
+
 		//put pathname in there...
 		//pathname always has a preceeding slash
 		var doc = document;
-		if ( window.top != window.self 
+		if ( window.top != window.self
 				&& window.top.document.domain == window.self.document.domain ) {
 			doc = window.top.document;
 		}
-		
+
 		body_classes.push( "s_pathname" + doc.location.pathname.replace( /\//g , "_" ).replace( /\./g , "_" ) );
-		
+
 		for ( var name in this ) {
 			if ( !RouteState.isFunction( this[name] ) && name.length > 0 && this[name] && String( this[name] ).length > 0 ) {
-				
+
 				if ( RouteState.dependencyFulfilled( this , name ) ) {
 					if ( RouteState.isArray( this[name] ) ) {
 						var element;
@@ -452,13 +452,13 @@ RouteStateRoute.prototype.toBodyClass = function () {
 					}else{
 						body_classes.push( "s_" + name + "_" + this[name] );
 					}
-					
+
 					body_classes.push( "s_" + name );//just a name, boolean lookup thing
 				}
 			}
 		}
-		
-		
+
+
 		if ( body_classes.length == 0 ) {
 			body_classes.push("s_empty");
 		}
@@ -471,23 +471,23 @@ RouteStateRoute.prototype.clone = function ( overrides , replace_arrays  ) {
 	if ( !replace_arrays ) {
 		replace_arrays = false;
 	}
-	
+
 	if ( overrides ) {
 		for ( var i in overrides ) {
 			if ( !RouteState.isFunction( overrides[i] ) ) {
-				
+
 				if ( RouteState.isArray( overrides[i] ) ) {
 					if ( replace_arrays ) {
 						routeState[i] = [].concat( overrides[i] );
 					}else{
-						
+
 						if ( !routeState[i] ) {
 							routeState[i] = [];
 						}
 						if ( !RouteState.isArray( routeState[i] ) ) {
 							routeState[i] = [].concat( routeState[i] );
 						}
-						
+
 						var override;
 						for ( var p=0; p<overrides[i].length; p++ ) {
 							override = overrides[i][p];
@@ -512,6 +512,3 @@ RouteStateRoute.prototype.clone = function ( overrides , replace_arrays  ) {
 	}
 	return routeState;
 };
-
-
-
