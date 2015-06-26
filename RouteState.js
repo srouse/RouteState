@@ -414,6 +414,47 @@ RouteStateRoute.prototype.toHash = function () {
 	doc.location.hash = routeStr;
 };
 
+RouteStateRoute.prototype.serializedToBodyClasses = function () {
+	var body_classes = [];
+
+	//put pathname in there...
+	//pathname always has a preceeding slash
+	var doc = document;
+	if ( window.top != window.self
+			&& window.top.document.domain == window.self.document.domain ) {
+		doc = window.top.document;
+	}
+
+	body_classes.push( "s_pathname" + doc.location.pathname.replace( /\//g , "_" ).replace( /\./g , "_" ) );
+
+	for ( var name in this ) {
+		if ( 	!RouteState.isFunction( this[name] ) 
+				&& name.length > 0 
+				&& this[name] 
+				&& String( this[name] ).length > 0 ) {
+			if ( RouteState.dependencyFulfilled( this , name ) ) {
+				if ( RouteState.isArray( this[name] ) ) {
+					var element;
+					for ( var e=0; e<this[name].length; e++ ) {
+						element = this[name][e];
+						body_classes.push( "s_" + name + "_" + element );
+					}
+				}else{
+					body_classes.push( "s_" + name + "_" + this[name] );
+				}
+
+				body_classes.push( "s_" + name );//just a name, boolean lookup thing
+			}
+		}
+	}
+
+
+	if ( body_classes.length == 0 ) {
+		body_classes.push("s_empty");
+	}
+	return body_classes.join(" ");
+}
+
 RouteStateRoute.prototype.toBodyClass = function () {
 	if ( RouteState.inject_body_class ) {
 
@@ -426,43 +467,8 @@ RouteStateRoute.prototype.toBodyClass = function () {
 			    }
 			});
 		}
-
-		var body_classes = [];
-
-		//put pathname in there...
-		//pathname always has a preceeding slash
-		var doc = document;
-		if ( window.top != window.self
-				&& window.top.document.domain == window.self.document.domain ) {
-			doc = window.top.document;
-		}
-
-		body_classes.push( "s_pathname" + doc.location.pathname.replace( /\//g , "_" ).replace( /\./g , "_" ) );
-
-		for ( var name in this ) {
-			if ( !RouteState.isFunction( this[name] ) && name.length > 0 && this[name] && String( this[name] ).length > 0 ) {
-
-				if ( RouteState.dependencyFulfilled( this , name ) ) {
-					if ( RouteState.isArray( this[name] ) ) {
-						var element;
-						for ( var e=0; e<this[name].length; e++ ) {
-							element = this[name][e];
-							body_classes.push( "s_" + name + "_" + element );
-						}
-					}else{
-						body_classes.push( "s_" + name + "_" + this[name] );
-					}
-
-					body_classes.push( "s_" + name );//just a name, boolean lookup thing
-				}
-			}
-		}
-
-
-		if ( body_classes.length == 0 ) {
-			body_classes.push("s_empty");
-		}
-		$("body").addClass( body_classes.join(" ") );
+		
+		$("body").addClass( this.serializedToBodyClasses() );
 	}
 };
 RouteStateRoute.prototype.clone = function ( overrides , replace_arrays  ) {
