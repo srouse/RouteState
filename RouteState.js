@@ -455,22 +455,26 @@ RouteStateRoute.prototype.serializedToBodyClasses = function () {
 	return body_classes.join(" ");
 }
 
+RouteStateRoute.prototype.toElementClass = function ( element ) {
+	var body_class = $( element ).attr('class');
+	if ( body_class ) {
+		var classList = body_class.split(/\s+/);
+		$.each( classList, function(index, item){
+		    if ( item.indexOf( 's_' ) == 0  ) {
+		       $( element ).removeClass( item );
+		    }
+		});
+	}
+	
+	$( element ).addClass( this.serializedToBodyClasses() );
+};
+
 RouteStateRoute.prototype.toBodyClass = function () {
 	if ( RouteState.inject_body_class ) {
-
-		var body_class = $('body').attr('class');
-		if ( body_class ) {
-			var classList = body_class.split(/\s+/);
-			$.each( classList, function(index, item){
-			    if ( item.indexOf( 's_' ) == 0  ) {
-			       $('body').removeClass( item );
-			    }
-			});
-		}
-		
-		$("body").addClass( this.serializedToBodyClasses() );
+		this.toElementClass( "body" );
 	}
 };
+
 RouteStateRoute.prototype.clone = function ( overrides , replace_arrays  ) {
 	var routeState = RouteState.factory( this );
 
