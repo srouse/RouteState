@@ -1,10 +1,21 @@
 {
-    "name" : "RouteState",
-        "description" : "Routing for Prototypes...serialized object for hash and class injection for body class",
-        "author" : "srouse",
-        "version" : "0.2.6",
-        "dependencies": {
-       },
-       "devDependencies" : {
-       }
+  "name": "routestate",
+  "description": "Routing for Prototypes...serialized object for hash and class injection for body class",
+  "author": "srouse",
+  "version": "0.2.6",
+  "dependencies": {},
+  "devDependencies": {},
+  "main": "RouteState.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://srouse@github.com/srouse/RouteState.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/srouse/RouteState/issues"
+  },
+  "homepage": "https://github.com/srouse/RouteState"
 }
