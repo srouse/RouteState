@@ -16,41 +16,63 @@ RouteState.inject_body_class = true;
 
 RouteState.ROUTE_CHANGE_EVENT = "ROUTE_CHANGE_EVENT";
 
+RouteState.config = {};
+RouteState.config = function ( config )
+{
+	this.config = config;
+}
+
+RouteState.doneFunk;
+RouteState.DOMs = [];
 RouteState.listenToHash = function ( funk )
 {
-	var me = this;
+	// establish this as a singleton (across frames)
+	this.target_window = window;
+	this.target_document = document;
+	if (
+		window.top != window.self
+		&& window.top.document.domain
+			== window.self.document.domain
+	) {
+		this.target_window = window.top;
+		this.target_document = window.top.document;
 
-	var target_window = window;
-	this.document = document;
-	if ( window.top != window.self
-			&& window.top.document.domain == window.self.document.domain ) {
-		target_window = window.top;
-		this.document = window.top.document;
+		// if there is some race condition...
+		if ( !this.target_window.RouteState ) {
+			this.target_window.RouteState = this;
+			RouteState.DOMs.push( this.target_document );
+		}
+		window.RouteState = this.target_window.RouteState;
 	}
 
-	$(target_window).on('hashchange',function() {
-		me.prev_route = me.route;
-    	me.route = me.routeFromPath( me.document.location.hash );
-    	me.route.toBodyClass();
-    	me.checkDiffListeners();
-    	me.checkPropValueListeners();
+	RouteState.target_window = this.target_window;
+	RouteState.target_document = this.target_document;
 
-		if ( funk ) {
-			funk( me.route , me.prev_route );
-	    }
+	RouteState.DOMs.push( document );
+	var me = RouteState;
+
+	RouteState.doneFunk = funk;
+	$( this.target_window ).on('hashchange',function() {
+		// this is duplicating change...
+		var clone = RouteState.route.clone(
+			RouteState.objectFromPath(
+				RouteState.target_document.location.hash
+			)
+		);
+
+		// if it is different, then it came from user...
+		if (
+			clone.toHashString()
+			!= RouteState.route.toHashString()
+		) {
+			RouteState.updateRoute( clone );
+		}
 	});
 
-	//first one to deal with...
-	this.prev_route = this.factory();
-	this.route = this.routeFromPath( this.document.location.hash );
-	this.route.toBodyClass();
-	this.checkDiffListeners();
-	this.checkPropValueListeners();
-
-	if ( funk ) {
-		funk( this.route , this.prev_route );
-	}
-
+	// kick this off...
+	RouteState.updateRoute(
+		RouteState.routeFromPath( RouteState.target_document.location.hash )
+	);
 };
 
 RouteState.unlistenHash = function ()
@@ -59,43 +81,31 @@ RouteState.unlistenHash = function ()
 };
 
 
-//Only show some state names relative to the state of a dependancy
-RouteState.dependencies = {};
-RouteState.saved_dependencies = {};
-RouteState.addDisplayDependency = function ( names , dependancy )
+RouteState.updateRoute = function ( new_route )
 {
-	var name;
-	for ( var i=0; i<names.length; i++ ) {
-		name = names[i];
-		if ( !this.dependencies[name] ) {
-			this.dependencies[name] = [];
-		}
-
-		this.dependencies[name].push( dependancy );
-	}
-}
-RouteState.dependencyFulfilled = function ( route , name )
-{
-	if ( !this.dependencies[name] || !route ) {
-		return true;
+	if ( this.route ) {
+		this.prev_route = this.route;
 	}else{
-		var dependancy;
-		for ( var i=0; i<this.dependencies[name].length; i++ ) {
-			dependancy = this.dependencies[name][i];
-			for ( var dep_name in dependancy ) {
-				if ( route[dep_name] !== dependancy[dep_name] ) {
-					this.saved_dependencies[ name ] = route[name];
-					return false;
-					break;
-				}
-			}
-		}
-		return true;
+		this.prev_route = this.factory();
 	}
-}
+
+	this.route = new_route;
+	var me = this;
+	$( this.DOMs ).each( function ( index , value ) {
+		me.route.toElementClass( $( value ).find("body") );
+	});
+
+	this.checkDiffListeners();
+	this.checkPropValueListeners();
+
+	if ( this.doneFunk ) {
+		this.doneFunk( this.route , this.prev_route );
+	}
+};
 
 
-//Diff listener
+
+// Diff listener
 RouteState.diffListeners = {};
 RouteState.addDiffListener = function ( prop , callback )
 {
@@ -108,7 +118,6 @@ RouteState.checkDiffListeners = function ()
 {
 	if ( this.route ) {
 		var callbacks,callback,trigger_callbacks;
-
 
 		for ( var prop in this.diffListeners ) {
 			callbacks = this.diffListeners[prop];
@@ -152,7 +161,7 @@ RouteState.checkPropValueListeners = function ()
 				for ( var c=0; c<callbackObjs.length; c++ ) {
 					callbackObj = callbackObjs[c];
 
-					//check for exit callback first...
+					// check for exit callback first...
 					if (
 						callbackObj.exitcallback &&
 						this.prev_route[prop] == callbackObj.value &&
@@ -160,7 +169,6 @@ RouteState.checkPropValueListeners = function ()
 					) {
 						callbackObj.exitcallback( this.route , this.prev_route );
 					}
-
 
 					if (
 						this.route[prop] == callbackObj.value &&
@@ -170,8 +178,8 @@ RouteState.checkPropValueListeners = function ()
 					}
 				}
 			}else{
-				//call them all there is no prev route....
 
+				// call them all there is no prev route....
 				for ( var c=0; c<callbackObjs.length; c++ ) {
 					callbackObj = callbackObjs[c];
 					callbackObj.callback( this.route , this.prev_route );
@@ -180,10 +188,6 @@ RouteState.checkPropValueListeners = function ()
 		}
 	}
 }
-
-
-
-
 
 RouteState.factory = function ( state )
 {
@@ -202,9 +206,16 @@ RouteState.factory = function ( state )
 	return routeStateRoute;
 };
 
+
 RouteState.routeFromPath = function ( path )
 {
-	var routeStateRoute = this.factory( this.saved_dependencies );
+	return this.factory(
+		this.objectFromPath( path )
+	);
+};
+RouteState.objectFromPath = function ( path )
+{
+	var routeStateRoute = {};
 
 	//get rid of shebang
 	path = path.replace(/#!\//g,"");
@@ -218,7 +229,6 @@ RouteState.routeFromPath = function ( path )
 
 	var names = pathArr[1];
 	var vals = pathArr[0];
-
 
 	var valsArr = vals.split("/");
 	var namesArr = names.split(",");
@@ -240,41 +250,38 @@ RouteState.routeFromPath = function ( path )
 	return routeStateRoute;
 };
 
+
+
+// ===========HELPERS============
 RouteState.isFunction = function( functionToCheck ) {
 	var getType = {};
-	return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+	return functionToCheck && getType.toString.call(functionToCheck)
+			=== '[object Function]';
 };
 RouteState.isArray = function( functionToCheck ) {
 	var getType = {};
-	return functionToCheck && getType.toString.call(functionToCheck) === '[object Array]';
+	return functionToCheck && getType.toString.call(functionToCheck)
+			=== '[object Array]';
 };
 
-
-
-RouteState.toPath = function ( pathname , overrides , replace_arrays ) {
-	var route = this.route.clone( overrides , replace_arrays );
-	var routeStr = route.toString();
-	this.document.location = pathname + this.document.location.search + routeStr;
-};
-
+// ===========ROUTE OPERATORS============
 RouteState.merge = function ( overrides , replace_arrays )
 {
 	if ( this.route ) {
-		this.route.clone( overrides , replace_arrays ).toHash();
+		var new_route = this.route.clone( overrides , replace_arrays );
+		RouteState.updateRoute( new_route );
+		new_route.toHash();
 	}
-};
-
-RouteState.toPathAndReplace = function ( pathname , state ) {
-	var route = RouteState.factory( state );
-	var routeStr = route.toString();
-	this.document.location = pathname + this.document.location.search + routeStr;
 };
 
 RouteState.replace = function ( state )
 {
-	RouteState.factory( state ).toHash();
+	var new_route = RouteState.factory( state );
+	RouteState.updateRoute( new_route );
+	new_route.toHash();
 };
 
+// these are all operating on top of merge...
 RouteState.toggle = function ( state , other_state , replace_arrays )
 {
 	for ( var name in state ) {
@@ -340,6 +347,7 @@ RouteState.toggleIfThen = function ( cond_state , if_state , then_state , replac
 
 	this.merge( then_state , replace_arrays );
 };
+// ===========END ROUTE OPERATORS============
 
 
 RouteState.debug = function ()
@@ -349,7 +357,10 @@ RouteState.debug = function ()
 	for ( var i in this.route ) {
 		if ( !RouteState.isFunction( this.route[i] ) ) {
 			if ( RouteState.isArray( this.route[i] ) ) {
-				html.push( i + " = " + this.route[i].join(",<br/>&nbsp;&nbsp;&nbsp;&nbsp;") );
+				html.push(
+					i + " = "
+					+ this.route[i].join(",<br/>&nbsp;&nbsp;&nbsp;&nbsp;")
+				);
 			}else{
 				html.push( i + " = " + this.route[i] );
 			}
@@ -359,38 +370,82 @@ RouteState.debug = function ()
 	$("body").append("<div onclick='$(\".routestate_debug\").remove();' class='routestate_debug' style='padding: 10px; border: 1px solid grey; width:300px; background-color: #fff;position: fixed; top: 10px; left: 10px; z-index: 2000000;'>" +html.join("<br/>")+ "</div>");
 };
 
-
-
-
-
-
-
-
-
 //Route State instance....
 //RouteStateRoute
 var RouteStateRoute = function(){};
 
-RouteStateRoute.prototype.toString = function () {
-	var routeArr = ["#!"];
+RouteStateRoute.prototype.toHash = function () {
+	var routeStr = this.toHashString();
+	RouteState.target_document.location.hash = routeStr;
+};
+
+
+// ===========SERIALIZERS==================
+RouteStateRoute.prototype.toHashString = function () {
+
+	var route_config;
+
+	var routeObj = this.toObject();
+	var routeArr = [];
+	var default_weight = 100000;
+	for ( var name in routeObj ) {
+		// see if we are supposed to show this...
+		// make sure to get the top most config...
+		route_config = RouteState.config[name];
+
+		if ( route_config ) {
+
+			// ignore this if it shouldn't be in hash
+			if (
+				typeof route_config.show_in_hash !== 'undefined'
+				&& route_config.show_in_hash == false
+			) {
+				continue;
+			}
+		}else{
+			route_config = {
+				weight:default_weight
+			};
+		}
+
+		var weight = ( route_config.weight )
+						? route_config.weight : default_weight;
+
+		if ( RouteState.isArray( routeObj[name] ) ) {
+			routeArr.push({
+				name:name,
+				val:routeObj[name].join(","),
+				weight:weight
+			});
+		}else{
+			routeArr.push({
+				name:name,
+				val:routeObj[name],
+				weight:weight
+			});
+		}
+	}
+
+	// sort according to weight
+	routeArr.sort( function (a,b) {
+		if (a.weight < b.weight)
+			return -1;
+		if (a.weight > b.weight)
+			return 1;
+		return 0;
+	});
 
 	var nameArr = [];
 	var valArr = [];
-	for ( var name in this ) {
-		if ( !RouteState.isFunction( this[name] ) && this[name] && String( this[name] ).length > 0 ) {
-			if ( RouteState.dependencyFulfilled( this , name ) ) {
-				if ( RouteState.isArray( this[name] ) ) {
-					routeArr.push( name + ":" + this[name].join(",") );
-					nameArr.push( name );
-					valArr.push( this[name].join(",") );
-				}else{
-					routeArr.push( name + ":" + this[name] );
-					nameArr.push( name );
-					valArr.push( this[name] );
-				}
-			}
+
+	// finally put it all together in correct order...
+	$( routeArr ).each(
+		function ( index, value ) {
+			nameArr.push( value.name );
+			valArr.push( value.val );
 		}
-	}
+	);
+
 
 	//return routeArr.join("/");
 	if ( valArr.length > 0 ) {
@@ -400,52 +455,43 @@ RouteStateRoute.prototype.toString = function () {
 	}
 };
 
-RouteStateRoute.prototype.toHash = function () {
-	this.toBodyClass();//make it happen quicker...will happen again at hash change...
-	var routeStr = this.toString();
-	//empty string will not get rid of "#", but oh well...
-	var doc = document;
-	if (
-		window.top != window.self
-		&& window.top.document.domain == window.self.document.domain
-	) {
-		doc = window.top.document;
-	}
-	doc.location.hash = routeStr;
-};
-
 RouteStateRoute.prototype.serializedToBodyClasses = function () {
 	var body_classes = [];
 
 	//put pathname in there...
 	//pathname always has a preceeding slash
-	var doc = document;
-	if ( window.top != window.self
-			&& window.top.document.domain == window.self.document.domain ) {
-		doc = window.top.document;
-	}
+	body_classes.push(
+		"s_pathname"
+		+ RouteState.target_document
+			.location.pathname
+			.replace( /\//g , "_" ).replace( /\./g , "_" )
+	);
 
-	body_classes.push( "s_pathname" + doc.location.pathname.replace( /\//g , "_" ).replace( /\./g , "_" ) );
-
-	for ( var name in this ) {
-		if ( 	!RouteState.isFunction( this[name] ) 
-				&& name.length > 0 
-				&& this[name] 
-				&& String( this[name] ).length > 0 ) {
-			if ( RouteState.dependencyFulfilled( this , name ) ) {
-				if ( RouteState.isArray( this[name] ) ) {
-					var element;
-					for ( var e=0; e<this[name].length; e++ ) {
-						element = this[name][e];
-						body_classes.push( "s_" + name + "_" + element );
-					}
-				}else{
-					body_classes.push( "s_" + name + "_" + this[name] );
-				}
-
-				body_classes.push( "s_" + name );//just a name, boolean lookup thing
+	var routeObj = this.toObject();
+	for ( var name in routeObj ) {
+		// see if we are supposed to show this...
+		route_config = RouteState.config[name];
+		if ( route_config ) {
+			if (
+				typeof route_config.show_in_body !== 'undefined'
+				&& route_config.show_in_body == false
+			) {
+				continue;
 			}
 		}
+
+		if ( RouteState.isArray( routeObj[name] ) ) {
+			var element;
+			for ( var e=0; e<routeObj[name].length; e++ ) {
+				element = routeObj[name][e];
+				body_classes.push( "s_" + name + "_" + element );
+			}
+		}else{
+			body_classes.push( "s_" + name + "_" + routeObj[name] );
+		}
+
+		// just a name, boolean lookup thing
+		body_classes.push( "s_" + name );
 	}
 
 
@@ -454,6 +500,42 @@ RouteStateRoute.prototype.serializedToBodyClasses = function () {
 	}
 	return body_classes.join(" ");
 }
+
+
+RouteStateRoute.prototype.toObject = function () {
+	var routeObj = {};
+	for ( var name in this ) {
+		if (
+			!RouteState.isFunction( this[name] )
+			&& this[name]
+			&& String( this[name] ).length > 0
+		) {
+
+			route_config = RouteState.config[name];
+			if ( route_config ) {
+				// ignore this if it has a missing dependancy
+				if (
+					typeof route_config.dependency !== 'undefined'
+					&& !this[route_config.dependency]
+				){
+					continue;
+				}
+			}
+
+			routeObj[name] = this[name];
+		}
+	}
+	return routeObj;
+};
+
+
+
+
+// ===============END SERIALIZERS=============
+
+
+
+
 
 RouteStateRoute.prototype.toElementClass = function ( element ) {
 	var body_class = $( element ).attr('class');
@@ -465,15 +547,18 @@ RouteStateRoute.prototype.toElementClass = function ( element ) {
 		    }
 		});
 	}
-	
+
 	$( element ).addClass( this.serializedToBodyClasses() );
 };
 
+/*
+// Needs to be managed by RouteState Singleton...
 RouteStateRoute.prototype.toBodyClass = function () {
 	if ( RouteState.inject_body_class ) {
 		this.toElementClass( "body" );
 	}
 };
+*/
 
 RouteStateRoute.prototype.clone = function ( overrides , replace_arrays  ) {
 	var routeState = RouteState.factory( this );
@@ -485,7 +570,6 @@ RouteStateRoute.prototype.clone = function ( overrides , replace_arrays  ) {
 	if ( overrides ) {
 		for ( var i in overrides ) {
 			if ( !RouteState.isFunction( overrides[i] ) ) {
-
 				if ( RouteState.isArray( overrides[i] ) ) {
 					if ( replace_arrays ) {
 						routeState[i] = [].concat( overrides[i] );

@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<title>Route State</title>
-	
+
 		<meta http-equiv="cache-control" content="max-age=0" />
 		<meta http-equiv="cache-control" content="no-cache" />
 		<meta http-equiv="expires" content="0" />
@@ -11,43 +11,106 @@
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
 		<meta name="viewport" content="user-scalable=no,width=device-width,initial-scale=1.0,maximum-scale=1.0" />
-		
+
 
 		<script src="js/jquery.min.js"></script>
 		<script src="../RouteState.js"></script>
 
-		
+
 		<script>
 			$(window).ready( function () {
 				RouteState.listenToHash();
 
-				$(window).on('hashchange',function() {
-					$('.reflect').html( location.hash );
-				});
+				RouteState.addDiffListener("last",
+					function( route , prev_route ){
+						console.log( "last changed for iframe ");
+					}
+				);
 			});
 		</script>
-		
+
 		<style>
 			body {
 				background-color: #ddd;
 			}
-		
-			body.s_page_test {
+
+			body.s_page_red {
 				background-color: #fdd;
 			}
-			body.s_page_again {
+			body.s_page_green {
 				background-color: #dfd;
+			}
+			body.s_dogfur {
+				background-color: #dff;
+			}
+			body.s_last .last_set {
+				display: block;
+			}
+			body.s_dogfur .dogfur_set {
+				display: block;
+			}
+			body.s_bodyhidden .bodyhidden_set {
+				display: block;
+			}
+
+			div {
+				height: 40px;
+				cursor: hand;
+				cursor: pointer;
+			}
+
+			.last_set {
+				display: none;
+			}
+			.dogfur_set {
+				display: none;
+			}
+			.bodyhidden_set {
+				display: none;
 			}
 		</style>
 	</head>
 	<body>
-		<div class="reflect"></div>
-		
-		<div onclick="RouteState.merge({page:'test'})">change</div>
-		<div onclick="RouteState.merge({page:'again'})">change 2</div>
-		<div onclick="RouteState.replace({page:'test'})">change 3</div>
-		<div onclick="RouteState.toggle({last:'last'},{last:''})">TOGGLE</div>
+		<div onclick="RouteState.merge({page:'red'})">
+			RouteState.merge({page:'red'})
+		</div>
+		<div onclick="RouteState.merge({page:'green'})">
+			RouteState.merge({page:'green'})
+		</div>
+		<div onclick="RouteState.merge({page:''})">
+			RouteState.merge({page:''})
+		</div>
+		<div onclick="RouteState.toggle({last:'last'},{last:''})">
+			RouteState.toggle({last:'last'},{last:''})
+		</div>
+		<div onclick="RouteState.toggle({bodyhidden:'bodyhidden'},{bodyhidden:''})">
+			RouteState.toggle({bodyhidden:'bodyhidden'},{bodyhidden:''})
+		</div>
 
-		
+		<div onclick="RouteState.toggle({dogfur:'smells_good'},{dogfur:''})">
+			RouteState.toggle({dogfur:'smells_good'},{dogfur:''})
+		</div>
+
+		<div class="last_set">
+			Last is set
+		</div>
+		<div class="dogfur_set">
+			dogfur is set
+		</div>
+		<div class="bodyhidden_set">
+			bodyhidden_set
+		</div>
+
+
+		<h2>Array Handling</h2>
+		<div onclick="RouteState.toggle({arr:['nother']},{arr:['-nother']})">
+			RouteState.toggle({arr:['nother']},{arr:['-nother']})
+		</div>
+		<div onclick="RouteState.merge({arr:['here']})">
+			RouteState.merge({arr:['here']})
+		</div>
+		<div onclick="RouteState.merge({arr:['-here']})">
+			RouteState.merge({arr:['-here']})
+		</div>
 	</body>
 </html>
