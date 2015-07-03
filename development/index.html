@@ -62,10 +62,7 @@
 			$(window).ready( function () {
 				RouteState.config( route_config );
 				RouteState.listenToHash( function ( route , prev_route ) {
-					console.log( 'hash changed' );
-					console.log( route.toObject() );
-					console.log( prev_route.toObject() );
-					console.log( 'END hash changed' );
+					console.log( 'hash changed index' );
 				});
 
 				RouteState.addDiffListener("last",

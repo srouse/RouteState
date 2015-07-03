@@ -2,7 +2,7 @@
 	"name": "routestate",
 	"description": "Routing for Prototypes...serialized object for hash and class injection for body class",
 	"author": "srouse",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"dependencies": {
 		"jquery": "1.11.3"
 	},

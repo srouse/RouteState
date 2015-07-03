@@ -51,7 +51,18 @@ RouteState.listenToHash = function ( funk )
 	RouteState.DOMs.push( document );
 	var me = RouteState;
 
-	RouteState.doneFunk = funk;
+	//grandparent in previous funks declared...
+	if ( RouteState.doneFunk ) {
+		var old_funk = RouteState.doneFunk;
+		RouteState.doneFunk = function () {
+			old_funk();
+			funk();
+		};
+	}else{
+		RouteState.doneFunk = funk;
+	}
+
+	//RouteState.doneFunk = funk;
 	$( this.target_window ).on('hashchange',function() {
 		// this is duplicating change...
 		var clone = RouteState.route.clone(
