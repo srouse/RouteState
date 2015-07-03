@@ -54,9 +54,9 @@ RouteState.listenToHash = function ( funk )
 	//grandparent in previous funks declared...
 	if ( RouteState.doneFunk ) {
 		var old_funk = RouteState.doneFunk;
-		RouteState.doneFunk = function () {
-			old_funk();
-			funk();
+		RouteState.doneFunk = function ( route , prev_route ) {
+			old_funk( route , prev_route );
+			funk( route , prev_route );
 		};
 	}else{
 		RouteState.doneFunk = funk;
