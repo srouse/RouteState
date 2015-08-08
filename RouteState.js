@@ -123,7 +123,7 @@ RouteState.updateRoute = function ( new_route )
 
 RouteState.toPath = function ( pathname , overrides , replace_arrays ) {
 	var route = this.route.clone( overrides , replace_arrays );
-	var routeStr = route.toString();
+	var routeStr = route.toHashString();
 	document.location = pathname + document.location.search + routeStr;
 };
 
