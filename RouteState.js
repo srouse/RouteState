@@ -91,6 +91,13 @@ RouteState.unlistenHash = function ()
 	$(window).off('hashchange');
 };
 
+RouteState.kill = function ()
+{
+	this.unlistenHash();
+	RouteState.diffListeners = {};
+	RouteState.propValueListeners = {};
+};
+
 
 RouteState.updateRoute = function ( new_route )
 {
@@ -112,6 +119,12 @@ RouteState.updateRoute = function ( new_route )
 	if ( this.doneFunk ) {
 		this.doneFunk( this.route , this.prev_route );
 	}
+};
+
+RouteState.toPath = function ( pathname , overrides , replace_arrays ) {
+	var route = this.route.clone( overrides , replace_arrays );
+	var routeStr = route.toString();
+	document.location = pathname + document.location.search + routeStr;
 };
 
 
