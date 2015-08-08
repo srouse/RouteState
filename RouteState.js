@@ -96,6 +96,8 @@ RouteState.kill = function ()
 	this.unlistenHash();
 	RouteState.diffListeners = {};
 	RouteState.propValueListeners = {};
+	delete RouteState.prev_route;
+	delete RouteState.route;
 };
 
 
