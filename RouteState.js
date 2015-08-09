@@ -128,7 +128,11 @@ RouteState.toPath = function ( pathname , overrides , replace_arrays ) {
 	var routeStr = route.toHashString();
 	document.location = pathname + document.location.search + routeStr;
 };
-
+RouteState.toPathAndReplace = function ( pathname , state ) {
+	var route = RouteState.factory( state );
+	var routeStr = route.toHashString();
+	document.location = pathname + document.location.search + routeStr;
+};
 
 
 // Diff listener
