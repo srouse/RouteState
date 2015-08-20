@@ -63,22 +63,22 @@ RouteState.listenToHash = function ( funk )
 	}
 
 	//RouteState.doneFunk = funk;
-	$( this.target_window ).on('hashchange',function() {
-		// this is duplicating change...
-		var clone = RouteState.route.clone(
-			RouteState.objectFromPath(
+	if ( !this.target_window.RouteState.hashchanged_initialized ) {
+		$( this.target_window ).on('hashchange',function() {
+			// the hashchange duplicates update, so check if it is different...
+			// that would mean the hash was directly changed (by user or back button)
+			var clone = RouteState.routeFromPath (
 				RouteState.target_document.location.hash
-			)
-		);
-
-		// if it is different, then it came from user...
-		if (
-			clone.toHashString()
-			!= RouteState.route.toHashString()
-		) {
-			RouteState.updateRoute( clone );
-		}
-	});
+			);
+			if (
+				clone.toHashString()
+				!= RouteState.route.toHashString()
+			) {
+				RouteState.updateRoute( clone );
+			}
+		});
+		this.target_window.RouteState.hashchanged_initialized = true;
+	}
 
 	// kick this off...
 	RouteState.updateRoute(
@@ -137,12 +137,26 @@ RouteState.toPathAndReplace = function ( pathname , state ) {
 
 // Diff listener
 RouteState.diffListeners = {};
-RouteState.addDiffListener = function ( prop , callback )
+RouteState.diffClusters = {};
+RouteState.addDiffListener = function (
+	prop,
+	callback,
+	cluster_id
+)
 {
 	if ( !this.diffListeners[ prop ] ) {
 		this.diffListeners[ prop ] = [];
 	}
 	this.diffListeners[ prop ].push( callback );
+
+	if ( cluster_id ) {
+		if ( !this.diffClusters[ cluster_id ] ) {
+			this.diffClusters[ cluster_id ] = [];
+		}
+		this.diffClusters[ cluster_id ].push( callback );
+	}
+
+	return callback;
 }
 RouteState.checkDiffListeners = function ()
 {
@@ -170,15 +184,64 @@ RouteState.checkDiffListeners = function ()
 		}
 	}
 }
+RouteState.removeDiffListener = function ( difflistener_id )
+{
+	for ( var prop in this.diffListeners ) {
+		callbacks = this.diffListeners[prop];
+		for ( var c=0; c<callbacks.length; c++ ) {
+			callback = callbacks[c];
+
+			if ( callback === difflistener_id ) {
+				callbacks.splice( c , 1 );
+				break;
+			}
+		}
+	}
+}
+RouteState.removeDiffListenersViaClusterId = function ( cluster_id )
+{
+	if ( this.diffClusters[cluster_id] ) {
+		var callbacks = this.diffClusters[cluster_id];
+		for ( var c=0; c<callbacks.length; c++ ) {
+			callback = callbacks[c];
+			this.removeDiffListener( callback );
+		}
+		this.diffClusters[cluster_id] = false;
+		delete this.diffClusters[cluster_id];
+	}
+}
+
+
+
 
 
 RouteState.propValueListeners = {};
-RouteState.addPropValueListener = function ( prop , value , callback , exitcallback )
+RouteState.propValueClusters = {};
+RouteState.addPropValueListener = function (
+	prop , value ,
+	callback , exitcallback,
+	cluster_id
+)
 {
 	if ( !this.propValueListeners[ prop ] ) {
 		this.propValueListeners[ prop ] = [];
 	}
-	this.propValueListeners[ prop ].push( {value:value,callback:callback,exitcallback:exitcallback} );
+	this.propValueListeners[ prop ].push(
+		{
+			value:value,
+			callback:callback,
+			exitcallback:exitcallback
+		}
+	);
+
+	if ( cluster_id ) {
+		if ( !this.propValueClusters[ cluster_id ] ) {
+			this.propValueClusters[ cluster_id ] = [];
+		}
+		this.propValueClusters[ cluster_id ].push( callback );
+	}
+
+	return callback;
 }
 RouteState.checkPropValueListeners = function ()
 {
@@ -218,6 +281,35 @@ RouteState.checkPropValueListeners = function ()
 		}
 	}
 }
+RouteState.removePropValueListener = function ( valProplistener_id )
+{
+	for ( var prop in this.propValueListeners ) {
+		callbackObjs = this.propValueListeners[prop];
+		for ( var c=0; c<callbackObjs.length; c++ ) {
+			callbackObj = callbackObjs[c];
+
+			if ( callbackObj.callback === valProplistener_id ) {
+				callbackObjs.splice( c , 1 );
+				break;
+			}
+		}
+	}
+}
+RouteState.removePropValueListenersViaClusterId = function ( cluster_id )
+{
+	if ( this.propValueClusters[cluster_id] ) {
+		var callbacks = this.propValueClusters[cluster_id];
+		for ( var c=0; c<callbacks.length; c++ ) {
+			callback = callbacks[c];
+			this.removePropValueListener( callback );
+		}
+		this.propValueClusters[cluster_id] = false;
+		delete this.propValueClusters[cluster_id];
+	}
+}
+
+
+
 
 RouteState.factory = function ( state )
 {

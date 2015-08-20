@@ -103,6 +103,13 @@
 			bodyhidden_set
 		</div>
 
+		<h2>Nesting Events</h2>
+		<div onclick="RouteState.replace({var1:'cat',var2:'dog'})">
+			RouteState.replace({var1:'cat',var2:'dog'})
+		</div>
+		<div onclick="RouteState.merge({var2:''})">
+			RouteState.merge({var2:''})
+		</div>
 
 		<h2>Array Handling</h2>
 		<div onclick="RouteState.toggle({arr:['nother']},{arr:['-nother']})">

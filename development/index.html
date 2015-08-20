@@ -65,11 +65,34 @@
 					console.log( 'hash changed index' );
 				});
 
-				RouteState.addDiffListener("last",
+				document.difflistener_id = RouteState.addDiffListener(
+					"last",
 					function( route , prev_route ){
 						console.log( "last changed for index ");
+					},
+					"MAIN"
+				);
+
+
+
+				document.valProplistener_id = RouteState.addPropValueListener(
+					"last","last",
+					function( route , prev_route ){
+						console.log( "prop last to last");
+					},
+					function( route , prev_route ){
+						console.log( "prop last exited last");
+					},
+					"MAIN"
+				);
+
+				RouteState.addDiffListener(
+					"var2",
+					function( route , prev_route ){
+						console.log( "var2 changed");
 					}
 				);
+
 			});
 		</script>
 	</head>
@@ -117,8 +140,29 @@
 		</div>
 
 
+		<h2>Nesting Events</h2>
+		<div onclick="RouteState.replace({var1:'cat',var2:'dog'})">
+			RouteState.replace({var1:'cat',var2:'dog'})
+		</div>
+		<div onclick="RouteState.merge({var2:''})">
+			RouteState.merge({var2:''})
+		</div>
 
 
+		<h2>Destroy</h2>
+		<div onclick="RouteState.removeDiffListener(document.difflistener_id)">
+			Destroy Diff
+		</div>
+		<div onclick="RouteState.removeDiffListenersViaClusterId('MAIN')">
+			Destroy Diff via Cluster
+		</div>
+
+		<div onclick="RouteState.removePropValueListener(document.valProplistener_id)">
+			Destroy ValProp
+		</div>
+		<div onclick="RouteState.removePropValueListenersViaClusterId('MAIN')">
+			Destroy ValProps via Cluster
+		</div>
 
 	</body>
 </html>
