@@ -75,9 +75,10 @@ RouteState.listenToHash = function ( funk )
 				RouteState.updateRoute( clone );
 			}
 		});
-		$( this.target_window ).on('unload',function() {
-			RouteState.saveSessionRoute();
-		});
+		// needs to be more intentional...could just refresh page
+		// $( this.target_window ).on('unload',function() {
+			// RouteState.saveSessionRoute();
+		// });
 		this.target_window.RouteState.hashchanged_initialized = true;
 
 		if ( RouteState.sustain_hash_history && localStorage ) {
