@@ -12,6 +12,7 @@ RouteState.inject_body_class = true;
 RouteState.sustain_hash_history = true;
 
 RouteState.ROUTE_CHANGE_EVENT = "ROUTE_CHANGE_EVENT";
+RouteState.LAST_SESSION_TAG = "LAST_SESSION_TAG";
 
 RouteState.config = {};
 RouteState.config = function ( config )
@@ -83,14 +84,15 @@ RouteState.listenToHash = function ( funk )
 
 		if ( RouteState.sustain_hash_history && localStorage ) {
 			RouteState.session_prev_route = {};
+			var tag = RouteState.LAST_SESSION_TAG;
 			RouteState.session_prev_route.route = localStorage.getItem(
-											"RouteState.route"
+											"RouteState."+tag+".route"
 										);
 			RouteState.session_prev_route.pathname = localStorage.getItem(
-											"RouteState.pathname"
+											"RouteState."+tag+".pathname"
 										);
 			RouteState.session_prev_route.search = localStorage.getItem(
-											"RouteState.search"
+											"RouteState."+tag+".search"
 										);
 		}
 	}
@@ -151,24 +153,32 @@ RouteState.toPathAndReplace = function ( pathname , state ) {
 	this.toLocation( pathname , document.location.search , routeStr );
 };
 
-	RouteState.saveSessionRoute = function () {
-		if ( RouteState.sustain_hash_history && localStorage ) {
+RouteState.tagSessionRoute = function ( tag_name ) {
+	this.saveSessionRoute( tag_name );
+}
+	RouteState.saveSessionRoute = function ( tag_name ) {
+		if ( localStorage ) {
+			if ( !tag_name ) {
+				tag_name = RouteState.LAST_SESSION_TAG;
+			}
+
 			localStorage.setItem(
-				"RouteState.route",
+				"RouteState." + tag_name + ".route",
 				RouteState.route.toHashString()
 			);
 			localStorage.setItem(
-				"RouteState.pathname",
+				"RouteState." + tag_name + ".pathname",
 				document.location.pathname
 			);
 			localStorage.setItem(
-				"RouteState.search",
+				"RouteState." + tag_name + ".search",
 				document.location.search
 			);
 		}
 	};
 	RouteState.toLocation = function ( pathname , search , routeStr ) {
-		this.saveSessionRoute();
+		if ( RouteState.sustain_hash_history )
+			this.saveSessionRoute();
 		document.location = pathname + search + routeStr;
 	};
 
@@ -177,15 +187,29 @@ RouteState.isSessionPathnameSame = function () {
 				== document.location.pathname );
 }
 
-RouteState.toSessionRoute = function () {
-	if ( RouteState.session_prev_route ) {
-		var session_route = RouteState.factory(
-								RouteState.session_prev_route.route
-							);
+RouteState.toSessionRoute = function ( tag_name ) {
+
+	if ( !tag_name )
+		tag_name = RouteState.LAST_SESSION_TAG;
+
+
+	var sessionRoute = {};
+	sessionRoute.route = localStorage.getItem(
+									"RouteState."+tag_name+".route"
+								);
+	sessionRoute.pathname = localStorage.getItem(
+									"RouteState."+tag_name+".pathname"
+								);
+	sessionRoute.search = localStorage.getItem(
+									"RouteState."+tag_name+".search"
+								);
+
+
+	if ( sessionRoute.route ) {
 		this.toLocation(
-			RouteState.session_prev_route.pathname,
-			RouteState.session_prev_route.search,
-			RouteState.session_prev_route.route
+			sessionRoute.pathname,
+			sessionRoute.search,
+			sessionRoute.route
 		);
 		return true;
 	}else{
