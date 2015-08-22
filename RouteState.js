@@ -80,15 +80,15 @@ RouteState.listenToHash = function ( funk )
 		});
 		this.target_window.RouteState.hashchanged_initialized = true;
 
-		if ( RouteState.sustain_hash_history && sessionStorage ) {
+		if ( RouteState.sustain_hash_history && localStorage ) {
 			RouteState.session_prev_route = {};
-			RouteState.session_prev_route.route = sessionStorage.getItem(
+			RouteState.session_prev_route.route = localStorage.getItem(
 											"RouteState.route"
 										);
-			RouteState.session_prev_route.pathname = sessionStorage.getItem(
+			RouteState.session_prev_route.pathname = localStorage.getItem(
 											"RouteState.pathname"
 										);
-			RouteState.session_prev_route.search = sessionStorage.getItem(
+			RouteState.session_prev_route.search = localStorage.getItem(
 											"RouteState.search"
 										);
 		}
@@ -151,16 +151,16 @@ RouteState.toPathAndReplace = function ( pathname , state ) {
 };
 
 	RouteState.saveSessionRoute = function () {
-		if ( RouteState.sustain_hash_history && sessionStorage ) {
-			sessionStorage.setItem(
+		if ( RouteState.sustain_hash_history && localStorage ) {
+			localStorage.setItem(
 				"RouteState.route",
 				RouteState.route.toHashString()
 			);
-			sessionStorage.setItem(
+			localStorage.setItem(
 				"RouteState.pathname",
 				document.location.pathname
 			);
-			sessionStorage.setItem(
+			localStorage.setItem(
 				"RouteState.search",
 				document.location.search
 			);
