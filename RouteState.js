@@ -40,19 +40,6 @@ RouteState.listenToHash = function ( funk )
 			RouteState.DOMs.push( this.target_document );
 		}
 		window.RouteState = this.target_window.RouteState;
-
-		if ( RouteState.sustain_hash_history && sessionStorage ) {
-			RouteState.session_prev_route = {};
-			RouteState.session_prev_route.route = sessionStorage.getItem(
-											"RouteState.route"
-										);
-			RouteState.session_prev_route.pathname = sessionStorage.getItem(
-											"RouteState.pathname"
-										);
-			RouteState.session_prev_route.search = sessionStorage.getItem(
-											"RouteState.search"
-										);
-		}
 	}
 
 	RouteState.target_window = this.target_window;
@@ -88,7 +75,23 @@ RouteState.listenToHash = function ( funk )
 				RouteState.updateRoute( clone );
 			}
 		});
+		$( this.target_window ).on('unload',function() {
+			RouteState.saveSessionRoute();
+		});
 		this.target_window.RouteState.hashchanged_initialized = true;
+
+		if ( RouteState.sustain_hash_history && sessionStorage ) {
+			RouteState.session_prev_route = {};
+			RouteState.session_prev_route.route = sessionStorage.getItem(
+											"RouteState.route"
+										);
+			RouteState.session_prev_route.pathname = sessionStorage.getItem(
+											"RouteState.pathname"
+										);
+			RouteState.session_prev_route.search = sessionStorage.getItem(
+											"RouteState.search"
+										);
+		}
 	}
 
 	// kick this off...
@@ -147,7 +150,7 @@ RouteState.toPathAndReplace = function ( pathname , state ) {
 	this.toLocation( pathname , document.location.search , routeStr );
 };
 
-	RouteState.toLocation = function ( pathname , search , routeStr ) {
+	RouteState.saveSessionRoute = function () {
 		if ( RouteState.sustain_hash_history && sessionStorage ) {
 			sessionStorage.setItem(
 				"RouteState.route",
@@ -162,6 +165,9 @@ RouteState.toPathAndReplace = function ( pathname , state ) {
 				document.location.search
 			);
 		}
+	};
+	RouteState.toLocation = function ( pathname , search , routeStr ) {
+		this.saveSessionRoute();
 		document.location = pathname + search + routeStr;
 	};
 
