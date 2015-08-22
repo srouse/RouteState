@@ -1,18 +1,15 @@
-
 /*
 
 #TODO Abstract the Route object...functions are conflicting with array
-#TODO clean up references to top document...make optional?
 
 */
-
 
 var RouteState = function(){};
 
 RouteState.route;
 RouteState.prev_route;
-
 RouteState.inject_body_class = true;
+RouteState.sustain_hash_history = true;
 
 RouteState.ROUTE_CHANGE_EVENT = "ROUTE_CHANGE_EVENT";
 
@@ -43,6 +40,19 @@ RouteState.listenToHash = function ( funk )
 			RouteState.DOMs.push( this.target_document );
 		}
 		window.RouteState = this.target_window.RouteState;
+
+		if ( RouteState.sustain_hash_history && sessionStorage ) {
+			RouteState.session_prev_route = {};
+			RouteState.session_prev_route.route = sessionStorage.getItem(
+											"RouteState.route"
+										);
+			RouteState.session_prev_route.pathname = sessionStorage.getItem(
+											"RouteState.pathname"
+										);
+			RouteState.session_prev_route.search = sessionStorage.getItem(
+											"RouteState.search"
+										);
+		}
 	}
 
 	RouteState.target_window = this.target_window;
@@ -66,7 +76,8 @@ RouteState.listenToHash = function ( funk )
 	if ( !this.target_window.RouteState.hashchanged_initialized ) {
 		$( this.target_window ).on('hashchange',function() {
 			// the hashchange duplicates update, so check if it is different...
-			// that would mean the hash was directly changed (by user or back button)
+			// that would mean the hash was directly
+			// changed (by user or back button)
 			var clone = RouteState.routeFromPath (
 				RouteState.target_document.location.hash
 			);
@@ -100,7 +111,6 @@ RouteState.kill = function ()
 	delete RouteState.route;
 };
 
-
 RouteState.updateRoute = function ( new_route )
 {
 	if ( this.route ) {
@@ -126,14 +136,50 @@ RouteState.updateRoute = function ( new_route )
 RouteState.toPath = function ( pathname , overrides , replace_arrays ) {
 	var route = this.route.clone( overrides , replace_arrays );
 	var routeStr = route.toHashString();
-	document.location = pathname + document.location.search + routeStr;
+	//document.location = pathname + document.location.search + routeStr;
+	this.toLocation( pathname , document.location.search , routeStr );
 };
+
 RouteState.toPathAndReplace = function ( pathname , state ) {
 	var route = RouteState.factory( state );
 	var routeStr = route.toHashString();
-	document.location = pathname + document.location.search + routeStr;
+	//document.location = pathname + document.location.search + routeStr;
+	this.toLocation( pathname , document.location.search , routeStr );
 };
 
+	RouteState.toLocation = function ( pathname , search , routeStr ) {
+		if ( RouteState.sustain_hash_history && sessionStorage ) {
+			sessionStorage.setItem(
+				"RouteState.route",
+				RouteState.route.toHashString()
+			);
+			sessionStorage.setItem(
+				"RouteState.pathname",
+				document.location.pathname
+			);
+			sessionStorage.setItem(
+				"RouteState.search",
+				document.location.search
+			);
+		}
+		document.location = pathname + search + routeStr;
+	};
+
+RouteState.toSessionRoute = function () {
+	if ( RouteState.session_prev_route ) {
+		var session_route = RouteState.factory(
+								RouteState.session_prev_route.route
+							);
+		this.toLocation(
+			RouteState.session_prev_route.pathname,
+			RouteState.session_prev_route.search,
+			RouteState.session_prev_route.route
+		);
+		return true;
+	}else{
+		return false;
+	}
+}
 
 // Diff listener
 RouteState.diffListeners = {};
@@ -158,6 +204,7 @@ RouteState.addDiffListener = function (
 
 	return callback;
 }
+
 RouteState.checkDiffListeners = function ()
 {
 	if ( this.route ) {
@@ -184,6 +231,7 @@ RouteState.checkDiffListeners = function ()
 		}
 	}
 }
+
 RouteState.removeDiffListener = function ( difflistener_id )
 {
 	for ( var prop in this.diffListeners ) {
@@ -198,6 +246,7 @@ RouteState.removeDiffListener = function ( difflistener_id )
 		}
 	}
 }
+
 RouteState.removeDiffListenersViaClusterId = function ( cluster_id )
 {
 	if ( this.diffClusters[cluster_id] ) {
@@ -210,10 +259,6 @@ RouteState.removeDiffListenersViaClusterId = function ( cluster_id )
 		delete this.diffClusters[cluster_id];
 	}
 }
-
-
-
-
 
 RouteState.propValueListeners = {};
 RouteState.propValueClusters = {};
@@ -243,6 +288,7 @@ RouteState.addPropValueListener = function (
 
 	return callback;
 }
+
 RouteState.checkPropValueListeners = function ()
 {
 	if ( this.route ) {
@@ -260,14 +306,18 @@ RouteState.checkPropValueListeners = function ()
 						this.prev_route[prop] == callbackObj.value &&
 						this.route[prop] != callbackObj.value
 					) {
-						callbackObj.exitcallback( this.route , this.prev_route );
+						callbackObj.exitcallback(
+							this.route , this.prev_route
+						);
 					}
 
 					if (
 						this.route[prop] == callbackObj.value &&
 						this.prev_route[prop] != callbackObj.value
 					) {
-						callbackObj.callback( this.route , this.prev_route );
+						callbackObj.callback(
+							this.route , this.prev_route
+						);
 					}
 				}
 			}else{
@@ -275,12 +325,15 @@ RouteState.checkPropValueListeners = function ()
 				// call them all there is no prev route....
 				for ( var c=0; c<callbackObjs.length; c++ ) {
 					callbackObj = callbackObjs[c];
-					callbackObj.callback( this.route , this.prev_route );
+					callbackObj.callback(
+						this.route , this.prev_route
+					);
 				}
 			}
 		}
 	}
 }
+
 RouteState.removePropValueListener = function ( valProplistener_id )
 {
 	for ( var prop in this.propValueListeners ) {
@@ -295,6 +348,7 @@ RouteState.removePropValueListener = function ( valProplistener_id )
 		}
 	}
 }
+
 RouteState.removePropValueListenersViaClusterId = function ( cluster_id )
 {
 	if ( this.propValueClusters[cluster_id] ) {
@@ -307,9 +361,6 @@ RouteState.removePropValueListenersViaClusterId = function ( cluster_id )
 		delete this.propValueClusters[cluster_id];
 	}
 }
-
-
-
 
 RouteState.factory = function ( state )
 {
@@ -328,13 +379,13 @@ RouteState.factory = function ( state )
 	return routeStateRoute;
 };
 
-
 RouteState.routeFromPath = function ( path )
 {
 	return this.factory(
 		this.objectFromPath( path )
 	);
 };
+
 RouteState.objectFromPath = function ( path )
 {
 	var routeStateRoute = {};
@@ -372,14 +423,13 @@ RouteState.objectFromPath = function ( path )
 	return routeStateRoute;
 };
 
-
-
 // ===========HELPERS============
 RouteState.isFunction = function( functionToCheck ) {
 	var getType = {};
 	return functionToCheck && getType.toString.call(functionToCheck)
 			=== '[object Function]';
 };
+
 RouteState.isArray = function( functionToCheck ) {
 	var getType = {};
 	return functionToCheck && getType.toString.call(functionToCheck)
@@ -437,7 +487,11 @@ RouteState.toggle = function ( state , other_state , replace_arrays )
 	this.merge( other_state , replace_arrays );
 };
 
-RouteState.toggleIfThen = function ( cond_state , if_state , then_state , replace_arrays )
+RouteState.toggleIfThen = function (
+	cond_state,
+	if_state , then_state ,
+	replace_arrays
+)
 {
 	for ( var name in cond_state ) {
 		if ( this.isArray( cond_state[name] ) ) {
@@ -471,7 +525,6 @@ RouteState.toggleIfThen = function ( cond_state , if_state , then_state , replac
 };
 // ===========END ROUTE OPERATORS============
 
-
 RouteState.debug = function ()
 {
 	$(".routestate_debug").remove();
@@ -489,7 +542,14 @@ RouteState.debug = function ()
 		}
 	}
 
-	$("body").append("<div onclick='$(\".routestate_debug\").remove();' class='routestate_debug' style='padding: 10px; border: 1px solid grey; width:300px; background-color: #fff;position: fixed; top: 10px; left: 10px; z-index: 2000000;'>" +html.join("<br/>")+ "</div>");
+	$("body").append("<div onclick='$(\".routestate_debug\").remove();'"
+				+" class='routestate_debug'"
+				+" style='padding: 10px; border: 1px solid grey;"
+				+" width:300px; background-color: #fff;"
+				+" position: fixed; top: 10px;"
+				+" left: 10px; z-index: 2000000;'>"
+				+html.join("<br/>")
+				+ "</div>");
 };
 
 //Route State instance....
@@ -501,12 +561,9 @@ RouteStateRoute.prototype.toHash = function () {
 	RouteState.target_document.location.hash = routeStr;
 };
 
-
 // ===========SERIALIZERS==================
 RouteStateRoute.prototype.toHashString = function () {
-
 	var route_config;
-
 	var routeObj = this.toObject();
 	var routeArr = [];
 	var default_weight = 100000;
@@ -568,7 +625,6 @@ RouteStateRoute.prototype.toHashString = function () {
 		}
 	);
 
-
 	//return routeArr.join("/");
 	if ( valArr.length > 0 ) {
 		return "#!/" + valArr.join("/") + "/(" + nameArr.join(",") + ")";
@@ -616,13 +672,11 @@ RouteStateRoute.prototype.serializedToBodyClasses = function () {
 		body_classes.push( "s_" + name );
 	}
 
-
 	if ( body_classes.length == 0 ) {
 		body_classes.push("s_empty");
 	}
 	return body_classes.join(" ");
 }
-
 
 RouteStateRoute.prototype.toObject = function () {
 	var routeObj = {};
@@ -649,15 +703,7 @@ RouteStateRoute.prototype.toObject = function () {
 	}
 	return routeObj;
 };
-
-
-
-
 // ===============END SERIALIZERS=============
-
-
-
-
 
 RouteStateRoute.prototype.toElementClass = function ( element ) {
 	var body_class = $( element ).attr('class');

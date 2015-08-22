@@ -148,6 +148,17 @@
 			RouteState.merge({var2:''})
 		</div>
 
+		<h2>Session Save</h2>
+		<div onclick="RouteState.toPath( 'index.html' , {var1:'AAAA',var2:'BBBB'})">
+			RouteState.toPath("index.html", {var1:'AAAA',var2:'BBBB'});
+		</div>
+		<div onclick="RouteState.toPath( '../development/' , {var1:'AAAA',var2:'CCC'})">
+			RouteState.toPath("../development/", {var1:'AAAA',var2:'CCC'});
+		</div>
+		<div onclick="RouteState.toSessionRoute()">
+			RouteState.toSessionRoute()
+		</div>
+
 
 		<h2>Destroy</h2>
 		<div onclick="RouteState.removeDiffListener(document.difflistener_id)">
