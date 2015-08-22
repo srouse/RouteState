@@ -172,7 +172,7 @@ RouteState.toPathAndReplace = function ( pathname , state ) {
 		document.location = pathname + search + routeStr;
 	};
 
-RouteState.isSessionPathnameDifferent = function () {
+RouteState.isSessionPathnameSame = function () {
 	return ( RouteState.session_prev_route.pathname
 				== document.location.pathname );
 }
