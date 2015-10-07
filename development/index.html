@@ -47,9 +47,20 @@
 				display: block;
 			}
 
-			.last_set {
-				display: none;
+			.pop {
+				.last_set {
+					display: none;
+
+					body.s_dogfur & {
+						display: block;
+					}
+				}
 			}
+
+			.pop {}
+			.pop .last_set {}
+			body.s_dogfur .pop .last_set {}
+
 			.dogfur_set {
 				display: none;
 			}
@@ -73,8 +84,6 @@
 					"MAIN"
 				);
 
-
-
 				document.valProplistener_id = RouteState.addPropValueListener(
 					"last","last",
 					function( route , prev_route ){
@@ -91,6 +100,14 @@
 					function( route , prev_route ){
 						console.log( "var2 changed");
 					}
+				);
+
+				RouteState.addDiffListeners(
+					["var2","last"],
+					function( route , prev_route ){
+						console.log( "var2 changed");
+					},
+					"MAIN"
 				);
 
 			});

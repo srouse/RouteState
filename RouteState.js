@@ -240,6 +240,19 @@ RouteState.addDiffListener = function (
 
 	return callback;
 }
+RouteState.addDiffListeners = function (
+	props,
+	callback,
+	cluster_id
+)
+{
+	var prop;
+	for ( var i=0; i<props.length; i++ ) {
+		prop = props[i];
+		this.addDiffListener( prop , callback , cluster_id );
+	}
+	return callback;
+}
 
 RouteState.checkDiffListeners = function ()
 {
