@@ -10,6 +10,7 @@ RouteState.route;
 RouteState.prev_route;
 RouteState.inject_body_class = true;
 RouteState.sustain_hash_history = true;
+RouteState.previous_state_to_body = true;
 
 RouteState.ROUTE_CHANGE_EVENT = "ROUTE_CHANGE_EVENT";
 RouteState.LAST_SESSION_TAG = "LAST_SESSION_TAG";
@@ -128,7 +129,10 @@ RouteState.updateRoute = function ( new_route )
 	this.route = new_route;
 	var me = this;
 	$( this.DOMs ).each( function ( index , value ) {
-		me.route.toElementClass( $( value ).find("body") );
+		me.route.toElementClass( $( value ).find("body") , "s_" );
+		if ( RouteState.previous_state_to_body && me.prev_route ) {
+			me.prev_route.toElementClass( $( value ).find("body") , "sp_" );
+		}
 	});
 
 	this.checkDiffListeners();
@@ -682,13 +686,13 @@ RouteStateRoute.prototype.toHashString = function () {
 	}
 };
 
-RouteStateRoute.prototype.serializedToBodyClasses = function () {
+RouteStateRoute.prototype.serializedToBodyClasses = function ( prefix ) {
 	var body_classes = [];
 
 	//put pathname in there...
 	//pathname always has a preceeding slash
 	body_classes.push(
-		"s_pathname"
+		prefix + "pathname"
 		+ RouteState.target_document
 			.location.pathname
 			.replace( /\//g , "_" ).replace( /\./g , "_" )
@@ -711,18 +715,18 @@ RouteStateRoute.prototype.serializedToBodyClasses = function () {
 			var element;
 			for ( var e=0; e<routeObj[name].length; e++ ) {
 				element = routeObj[name][e];
-				body_classes.push( "s_" + name + "_" + element );
+				body_classes.push( prefix + name + "_" + element );
 			}
 		}else{
-			body_classes.push( "s_" + name + "_" + routeObj[name] );
+			body_classes.push( prefix + name + "_" + routeObj[name] );
 		}
 
 		// just a name, boolean lookup thing
-		body_classes.push( "s_" + name );
+		body_classes.push( prefix + name );
 	}
 
 	if ( body_classes.length == 0 ) {
-		body_classes.push("s_empty");
+		body_classes.push( prefix + "empty");
 	}
 	return body_classes.join(" ");
 }
@@ -754,18 +758,18 @@ RouteStateRoute.prototype.toObject = function () {
 };
 // ===============END SERIALIZERS=============
 
-RouteStateRoute.prototype.toElementClass = function ( element ) {
+RouteStateRoute.prototype.toElementClass = function ( element , prefix ) {
 	var body_class = $( element ).attr('class');
 	if ( body_class ) {
 		var classList = body_class.split(/\s+/);
 		$.each( classList, function(index, item){
-		    if ( item.indexOf( 's_' ) == 0  ) {
+		    if ( item.indexOf( prefix ) == 0  ) {
 		       $( element ).removeClass( item );
 		    }
 		});
 	}
 
-	$( element ).addClass( this.serializedToBodyClasses() );
+	$( element ).addClass( this.serializedToBodyClasses( prefix ) );
 };
 
 /*
