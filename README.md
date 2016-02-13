@@ -47,7 +47,11 @@ RouteState.addDiffListener(
 
 ```JAVASCRIPT
 // Your hash will look like this:
-#!/home/other{page,tab}[,page.home]
+// / values /{ names }[ dependencies(indexes) ]
+#!/home/other{page,tab}[,0:]
+// in this state:
+// page = 'home' and tab = 'other'.
+// tab is also dependent on page existing and page's value being 'home' ( b/c of added ":" )
 ```
 
 ```HTML

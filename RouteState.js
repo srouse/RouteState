@@ -120,6 +120,10 @@ RouteState.kill = function ()
 
 RouteState.updateRoute = function ( new_route )
 {
+
+	// clear out empty values and dependencies...
+	new_route.cleanRoute();
+
 	if ( this.route ) {
 		this.prev_route = this.route;
 	}else{
@@ -127,9 +131,6 @@ RouteState.updateRoute = function ( new_route )
 	}
 
 	this.route = new_route;
-
-	// clear out empty values and dependencies...
-	this.route.cleanRoute();
 
 	var me = this;
 	$( this.DOMs ).each( function ( index , value ) {
@@ -452,18 +453,18 @@ RouteState.objectFromPath = function ( path )
 	path = path.replace("]","");
 
 	var dependencyArr = path.split("}[");
-	if ( dependencyArr.length < 2 ) {
-		return routeStateRoute;
+	path = dependencyArr[0];
+	if ( dependencyArr.length > 1 ) {
+		dependencyArr = dependencyArr[1].split(",");
+	}else{
+		path = path.replace("}","");
+		dependencyArr = [];
 	}
 
-	path = dependencyArr[0];
-	dependencyArr = dependencyArr[1].split(",");
-
 	var pathArr = path.split("/{");
-
-	/*if ( pathArr.length < 2 ) {
+	if ( pathArr.length < 2 ) {
 		return routeStateRoute;
-	}*/
+	}
 
 	var names = pathArr[1];
 	var vals = pathArr[0];
@@ -472,18 +473,26 @@ RouteState.objectFromPath = function ( path )
 	var namesArr = names.split(",");
 
 	var state = {};
-	var pair,name,name_arr,val,dependency;
+	var pair,name,name_arr,val,dependency,depName_arr;
 	for ( var a=0; a<namesArr.length; a++ ) {
 		name = namesArr[a];
 
+		// deal with dependencies...they are index based versus name
 		dependency = dependencyArr[a];
 		if ( dependency ) {
 			if ( !RouteState.config[name]) {
 				RouteState.config[name] = {};
 			}
+			depName_arr = dependency.split(":");
+			if ( depName_arr.length > 1 ) {
+				dependency = namesArr[ depName_arr[0] ] + ":" + depName_arr[1];
+			}else{
+				dependency = namesArr[ dependency ];
+			}
 			RouteState.config[name].dependency = dependency;
 		}
 
+		// now put values together
 		val = valsArr[a];
 		if ( val && val.length > 0 && name && name.length > 0) {
 			if ( val.indexOf( "," ) != -1 ) {// array
@@ -494,6 +503,7 @@ RouteState.objectFromPath = function ( path )
 		}
 	}
 
+	console.log( routeStateRoute );
 	return routeStateRoute;
 };
 
@@ -545,10 +555,19 @@ RouteState.processObjectForDependencies = function ( overrides )
 			new_overrides[new_name] = overrides[name];
 		}else{
 			new_overrides[name] = overrides[name];
+			RouteState.removeTies( name );
 		}
 	}
 	return new_overrides;
 }
+
+RouteState.removeTies = function ( source )
+{
+	if ( !RouteState.config[source]) {
+		RouteState.config[source] = {};
+	}
+	delete RouteState.config[source].dependency;
+};
 
 RouteState.tieToProp = function ( source , target )
 {
@@ -564,7 +583,7 @@ RouteState.tieToPropAndValue = function ( source , target )
 		RouteState.config[source] = {};
 	}
 	if ( RouteState.route && RouteState.route[target] ) {
-		RouteState.config[source].dependency = target + "." + RouteState.route[target];
+		RouteState.config[source].dependency = target + ":" + RouteState.route[target];
 	}else{
 		RouteState.tieToProp( source , target );
 	}
@@ -644,17 +663,26 @@ RouteState.toggleIfThen = function (
 RouteState.debug = function ()
 {
 	$(".routestate_debug").remove();
-	var html = ["width" + $(window).width() + "|height" + $(window).height()];
+	var html = ["width" + $(window).width() + " | height" + $(window).height()];
+	var depends;
 	for ( var i in this.route ) {
 		if ( !RouteState.isFunction( this.route[i] ) ) {
+
+			depends = "";
+			if ( RouteState.config[i] && RouteState.config[i].dependency ) {
+				depends = " (depends on '" + RouteState.config[i].dependency + "')";
+			}
+
 			if ( RouteState.isArray( this.route[i] ) ) {
 				html.push(
 					i + " = "
 					+ this.route[i].join(",<br/>&nbsp;&nbsp;&nbsp;&nbsp;")
+					+ depends
 				);
 			}else{
-				html.push( i + " = " + this.route[i] );
+				html.push( i + " = " + this.route[i] + depends);
 			}
+
 		}
 	}
 
@@ -679,6 +707,7 @@ RouteStateRoute.prototype.toHash = function () {
 
 // ===========SERIALIZERS==================
 RouteStateRoute.prototype.toHashString = function () {
+
 	var route_config;
 	var routeObj = this.toObject();
 	var routeArr = [];
@@ -730,6 +759,7 @@ RouteStateRoute.prototype.toHashString = function () {
 	});
 
 	var nameArr = [];
+	var nameLookup = {};
 	var valArr = [];
 	var dependancyArr = [];
 
@@ -738,9 +768,33 @@ RouteStateRoute.prototype.toHashString = function () {
 		function ( index, value ) {
 			nameArr.push( value.name );
 			valArr.push( value.val );
+			nameLookup[ value.name ] = index;
 
-			if ( RouteState.config && RouteState.config[value.name] ) {
+			/*if ( RouteState.config && RouteState.config[value.name] ) {
 				dependancyArr.push( RouteState.config[value.name].dependency );
+			}else{
+				dependancyArr.push( "" );
+			}*/
+		}
+	);
+
+	// now add dependencies, but via index of the name...
+	var depName_arr,show_dependencies = false;
+	$( routeArr ).each(
+		function ( index, value ) {
+			if (
+				RouteState.config &&
+				RouteState.config[value.name] &&
+				RouteState.config[value.name].dependency
+			) {
+				depName_arr = RouteState.config[value.name].dependency.split(":");
+				if ( depName_arr.length > 1 ) {
+					dependancyArr.push( nameLookup[ depName_arr[0] ] + ":" + depName_arr[1] );
+					show_dependencies = true;
+				}else{
+					dependancyArr.push( nameLookup[ depName_arr[0] ] );
+					show_dependencies = true;
+				}
 			}else{
 				dependancyArr.push( "" );
 			}
@@ -748,7 +802,11 @@ RouteStateRoute.prototype.toHashString = function () {
 	);
 
 	if ( valArr.length > 0 ) {
-		return "#!/" + valArr.join("/") + "/{" + nameArr.join(",") + "}[" + dependancyArr.join(",") + "]";
+		if ( show_dependencies ) {
+			return "#!/" + valArr.join("/") + "/{" + nameArr.join(",") + "}[" + dependancyArr.join(",") + "]";
+		}else{
+			return "#!/" + valArr.join("/") + "/{" + nameArr.join(",") + "}";
+		}
 	}else{
 		return "";
 	}
@@ -811,15 +869,16 @@ RouteStateRoute.prototype.cleanRoute = function () {
 			if ( route_config && typeof route_config.dependency !== 'undefined' ) {
 
 				// ignore this if it has a missing dependancy
-
-				dependency_arr = route_config.dependency.split(".");
+				dependency_arr = route_config.dependency.split(":");
 				if ( dependency_arr.length > 1 ) {
-					if ( String( this[dependency_arr[0]] ) != String( dependency_arr[1] ) ) {
+					if (
+						!this[dependency_arr[0]] ||
+						String( this[dependency_arr[0]] ) != String( dependency_arr[1] )
+					) {
 						dependancy_hits++;
 						delete this[name];
 					}
 				}else{
-
 					if (
 						!this[ route_config.dependency ]
 					){

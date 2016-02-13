@@ -49,19 +49,23 @@
 
         <div onClick="RS.replace({});">clear</div>
         <hr/>
-		<div onClick="RS.merge({'page':'5'});">set page to 5</div>
-        <div onClick="RS.merge({'page':'6'});">set page to 6</div>
-        <div onClick="RS.merge({'page':false});">set page to false</div>
-        <div onClick="RS.merge({'page':''});">set page to ""</div>
+		<div onClick="RS.merge({'page':'5'});">{'page':'5'}</div>
+        <div onClick="RS.merge({'page':'6'});">{'page':'6'}</div>
+        <div onClick="RS.merge({'page':false});">{'page':false}</div>
+        <div onClick="RS.merge({'page':''});">{'page':''}</div>
         <hr/>
-        <div onClick="RS.merge({'child':'carl'}); ">set child to carl</div>
-        <div onClick="RS.merge({'child':'doug'}); ">set child to doug</div>
-        <div onClick="RS.merge({'page:child':'paul'}); ">set child to paul</div>
-        <div onClick="RS.merge({'child':false}); ">clear child</div>
+        <div onClick="RS.merge({'child':'carl'}); ">{'child':'carl'}</div>
+        <div onClick="RS.merge({'child':'doug'}); ">{'child':'doug'}</div>
+        <div onClick="RS.merge({'page:child':'paul'}); ">{'page:child':'paul'}</div>
+        <div onClick="RS.merge({'child':false}); ">{'child':false}</div>
         <hr/>
-        <div onClick="RS.merge({'child:grandchild':'blah'});">set grandchild to blah</div>
-        <div onClick="RS.merge({'child.grandchild':'hoopla'});">set grandchild to hoopla</div>
-
+        <div onClick="RS.merge({'child:grandchild':'blah'});">{'child:grandchild':'blah'}</div>
+        <div onClick="RS.merge({'child.grandchild':'hoopla'});">{'child.grandchild':'hoopla'}</div>
+		<div onClick="RS.merge({'grandchild':'assss'});">{'grandchild':'assss'}</div>
+		<hr/>
+        <div onClick="RS.merge({'grandchild:ggchild':'blah'});">{'grandchild:ggchild':'blah'}</div>
+        <div onClick="RS.merge({'grandchild:ggchild':'hoopla'});">{'grandchild:ggchild':'hoopla'}</div>
+		<div onClick="RS.merge({'ggchild':'assss'});">{'ggchild':'assss'}</div>
 
 	</body>
 </html>
