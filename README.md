@@ -30,18 +30,24 @@ RouteState.addDiffListener(
 ```
 
 ```HTML
-// In your code call:
+// In your HTML call (bind however you like):
 <div onclick="RouteState.merge({page:'home'})">
     Go Home
 </div>
 <div onclick="RouteState.toggle({page:'home'},{last:''})">
     Toggle Page
 </div>
+<div onclick="RouteState.merge({'page.tab':'other'})">
+    Change Tabs and connect existence of tab state to existence of page state
+</div>
+<div onclick="RouteState.merge({'page:tab':'other'})">
+    Change Tabs and connect existence of tab state to existence of page and it's specific value when called
+</div>
 ```
 
 ```JAVASCRIPT
 // Your hash will look like this:
-#!/home/(page)
+#!/home/other{page,tab}[,page.home]
 ```
 
 ```HTML
