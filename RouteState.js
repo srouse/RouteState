@@ -127,6 +127,10 @@ RouteState.updateRoute = function ( new_route )
 	}
 
 	this.route = new_route;
+
+	// clear out empty values and dependencies...
+	this.route.cleanRoute();
+
 	var me = this;
 	$( this.DOMs ).each( function ( index , value ) {
 		me.route.toElementClass( $( value ).find("body") , "s_" );
@@ -134,9 +138,6 @@ RouteState.updateRoute = function ( new_route )
 			me.prev_route.toElementClass( $( value ).find("body") , "sp_" );
 		}
 	});
-
-	// clear out empty values and dependencies...
-	this.route.cleanRoute();
 
 	this.checkDiffListeners();
 	this.checkPropValueListeners();
