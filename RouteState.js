@@ -503,7 +503,6 @@ RouteState.objectFromPath = function ( path )
 		}
 	}
 
-	console.log( routeStateRoute );
 	return routeStateRoute;
 };
 
