@@ -57,7 +57,14 @@
         <div onClick="RS.merge({'child':'carl'}); ">{'child':'carl'}</div>
         <div onClick="RS.merge({'child':'doug'}); ">{'child':'doug'}</div>
         <div onClick="RS.merge({'page:child':'paul'}); ">{'page:child':'paul'}</div>
+		<div onClick="RS.toggle({'page:child':'paul'},{'page:child':false}); ">{'page:child':'paul'},{'page:child':false}</div>
         <div onClick="RS.merge({'child':false}); ">{'child':false}</div>
+        <hr/>
+		<div onClick="RS.merge({'page.arr':['1','2','3']}); ">{'arr':[1,2,3]}</div>
+        <div onClick="RS.merge({'page.arr':['4']}); ">{'arr':[4]}</div>
+		<div onClick="RS.merge({'page.arr':['-2']}); ">{'arr':['-2']}</div>
+		<div onClick="RS.toggle({'page.arr':['4']},{'page.arr':false},true); ">{'page.arr':[4]},{'page.arr':false}</div>
+        <div onClick="RS.merge({'page.arr':false}); ">{'arr':false}</div>
         <hr/>
         <div onClick="RS.merge({'child:grandchild':'blah'});">{'child:grandchild':'blah'}</div>
         <div onClick="RS.merge({'child.grandchild':'hoopla'});">{'child.grandchild':'hoopla'}</div>
