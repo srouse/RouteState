@@ -573,10 +573,17 @@ RouteState.processObjectForDependencies = function ( overrides )
 		new_overrides[ state_obj.name ] = overrides[name];
 		switch ( state_obj.relation ) {
 			case 1:
-				RouteState.tieToProp( state_obj.name , state_obj.dependency );
+				RouteState.tieToProp(
+					state_obj.name,
+					state_obj.dependency
+				);
 				break;
 			case 2:
-				RouteState.tieToPropAndValue( state_obj.name , state_obj.dependency );
+				RouteState.tieToPropAndValue(
+					state_obj.name,
+					state_obj.dependency,
+					overrides
+				);
 				break;
 			default:
 				RouteState.removeTies( name );
@@ -602,13 +609,28 @@ RouteState.tieToProp = function ( source , target )
 	RouteState.config[source].dependency = target;
 };
 
-RouteState.tieToPropAndValue = function ( source , target )
+RouteState.tieToPropAndValue = function ( source, target, overrides )
 {
 	if ( !RouteState.config[source]) {
 		RouteState.config[source] = {};
 	}
-	if ( RouteState.route && RouteState.route[target] ) {
-		RouteState.config[source].dependency = target + ":" + RouteState.route[target];
+
+	if (
+		( RouteState.route && RouteState.route[ target ] )  ||
+		( overrides && overrides[ target ] )
+	) {
+		var target_value;
+		// overrides should take precedence...
+		// they are going to be a part of the new route.
+		if ( overrides[ target ] ) {
+			target_value = overrides[ target ];
+		}else{
+			target_value = RouteState.route[target];
+		}
+
+		RouteState.config[source].dependency =
+			target + ":" + target_value;
+
 	}else{
 		RouteState.tieToProp( source , target );
 	}
