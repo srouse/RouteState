@@ -21,7 +21,7 @@
 			$(window).ready( function () {
 				RouteState.listenToHash(function() {
 					console.log( "hash changed iframe" );
-				});
+				} );
 
 				RouteState.addDiffListener("last",
 					function( route , prev_route ){

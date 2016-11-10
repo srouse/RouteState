@@ -23,7 +23,7 @@ RouteState.config = function ( config )
 
 RouteState.doneFunk;
 RouteState.DOMs = [];
-RouteState.listenToHash = function ( funk )
+RouteState.listenToHash = function ( funk, is_root )
 {
 	// establish this as a singleton (across frames)
 	this.target_window = window;
@@ -31,48 +31,50 @@ RouteState.listenToHash = function ( funk )
 
 	var is_topmost_window = true;
 
-	// need to walk up atainable parents...(at some point)
-	if (
-		window.top != window.self
-	){
-		var parent_window = window.parent;
-		var current_window = window;
-		var prev_window,passes;
+	if ( is_root !== true ) {
+		// need to walk up atainable parents...(at some point)
+		if (
+			window.top != window.self
+		){
+			var parent_window = window.parent;
+			var current_window = window;
+			var prev_window,passes;
 
-		while ( parent_window != window.top ) {
-			try {
-				// will error out when it is in different domain...
-				passes = parent_window.document.domain;
-				prev_window = current_window;
-				current_window = parent_window;
-				parent_window = current_window.parent;
-			}catch (e){
-				current_window = prev_window;
-				break;
+			while ( parent_window != window.top ) {
+				try {
+					// will error out when it is in different domain...
+					passes = parent_window.document.domain;
+					prev_window = current_window;
+					current_window = parent_window;
+					parent_window = current_window.parent;
+				}catch (e){
+					current_window = prev_window;
+					break;
+				}
 			}
-		}
 
-		//loop doesn't catch this last condition...
-		if ( parent_window == window.top ) {
-			try {
-				// will error out when it is in different domain...
-				passes = parent_window.document.domain;
-				current_window = parent_window;
-			}catch (e){
-				current_window = current_window;
+			//loop doesn't catch this last condition...
+			if ( parent_window == window.top ) {
+				try {
+					// will error out when it is in different domain...
+					passes = parent_window.document.domain;
+					current_window = parent_window;
+				}catch (e){
+					current_window = current_window;
+				}
 			}
+
+
+			this.target_window = current_window;
+			this.target_document = current_window.document;
+
+			// if there is some race condition...
+			if ( !this.target_window.RouteState ) {
+				this.target_window.RouteState = this;
+				RouteState.DOMs.push( this.target_document );
+			}
+			window.RouteState = this.target_window.RouteState;
 		}
-
-
-		this.target_window = current_window;
-		this.target_document = current_window.document;
-
-		// if there is some race condition...
-		if ( !this.target_window.RouteState ) {
-			this.target_window.RouteState = this;
-			RouteState.DOMs.push( this.target_document );
-		}
-		window.RouteState = this.target_window.RouteState;
 	}
 
 	/*if (
