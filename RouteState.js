@@ -29,6 +29,8 @@ RouteState.listenToHash = function ( funk, is_root )
 	this.target_window = window;
 	this.target_document = document;
 
+	this.route_stack = [];// routes can nest in a stack of routes
+
 	var is_topmost_window = true;
 
 	if ( is_root !== true ) {
@@ -63,7 +65,6 @@ RouteState.listenToHash = function ( funk, is_root )
 					current_window = current_window;
 				}
 			}
-
 
 			this.target_window = current_window;
 			this.target_document = current_window.document;
@@ -776,7 +777,7 @@ RouteState.debug = function ()
 			if ( RouteState.isArray( this.route[i] ) ) {
 				html.push(
 					i + " = "
-					+ this.route[i].join(",<br/>&nbsp;&nbsp;&nbsp;&nbsp;")
+					+ this.route[i].join(",<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")
 					+ depends
 				);
 			}else{
@@ -789,15 +790,37 @@ RouteState.debug = function ()
 	$("body").append("<div onclick='$(\".routestate_debug\").remove();'"
 				+" class='routestate_debug'"
 				+" style='padding: 10px; border: 1px solid grey;"
-				+" width:300px; background-color: #fff;"
+				+" width:300px; height: auto; background-color: #fff;"
 				+" position: fixed; top: 10px;"
 				+" right: 10px; z-index: 2000000;'>"
 				+html.join("<br/>")
 				+ "</div>");
 };
 
-//Route State instance....
-//RouteStateRoute
+// ===========ROUTE STACK==================
+RouteState.push = function () {
+	this.route_stack.push( this.route.clone() );
+	return this;
+};
+
+RouteState.pop = function () {
+	if ( this.route_stack.length > 0 ) {
+		this.replace( this.route_stack.pop() );
+	}else{
+		console.log("RouteState: nothing left in the stack.");
+	}
+	return this;
+};
+
+
+
+
+
+
+// ============================================
+// ========== RouteStateRoute =================
+// ============================================
+
 var RouteStateRoute = function(){};
 
 RouteStateRoute.prototype.toHash = function () {
@@ -958,7 +981,6 @@ RouteStateRoute.prototype.serializedToBodyClasses = function ( prefix ) {
 }
 
 RouteStateRoute.prototype.cleanRoute = function () {
-
 	var dependancy_hits = 0,dependency_arr;
 	for ( var name in this ) {
 		if (
@@ -999,7 +1021,6 @@ RouteStateRoute.prototype.cleanRoute = function () {
 		this.cleanRoute();
 	}
 }
-
 
 RouteStateRoute.prototype.toObject = function () {
 	var routeObj = {};
