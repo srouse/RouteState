@@ -12,6 +12,9 @@ RouteState.inject_body_class = true;
 RouteState.sustain_hash_history = true;
 RouteState.previous_state_to_body = true;
 
+RouteState.value_delimiter = "/";
+RouteState.use_json = false;// loose dependencies
+
 RouteState.ROUTE_CHANGE_EVENT = "ROUTE_CHANGE_EVENT";
 RouteState.LAST_SESSION_TAG = "LAST_SESSION_TAG";
 
@@ -405,7 +408,6 @@ RouteState.checkPropValueListeners = function ()
 			if ( this.prev_route ) {
 				for ( var c=0; c<callbackObjs.length; c++ ) {
 					callbackObj = callbackObjs[c];
-
 					// check for exit callback first...
 					if (
 						callbackObj.exitcallback &&
@@ -427,7 +429,6 @@ RouteState.checkPropValueListeners = function ()
 					}
 				}
 			}else{
-
 				// call them all there is no prev route....
 				for ( var c=0; c<callbackObjs.length; c++ ) {
 					callbackObj = callbackObjs[c];
@@ -492,12 +493,29 @@ RouteState.routeFromPath = function ( path )
 	);
 };
 
+RouteState.regExpQuote = function ( str ) {
+	return str.replace(/([.?*+^$[\]\\(){}|-])/g, "\\$1");
+}
+
 RouteState.objectFromPath = function ( path )
 {
+	if ( RouteState.use_json ) {
+		if ( path && path.length > 0 ) {
+			path = path.replace( /#!/ , "" );
+			var routeStateRoute = JSON.parse( path );
+			return routeStateRoute;
+		}else{
+			return {};
+		}
+	}
+
 	var routeStateRoute = {};
 
 	//get rid of shebang
-	path = path.replace(/#!\//g,"");
+	var replace = "#!" + RouteState.regExpQuote( RouteState.value_delimiter );
+	var re = new RegExp( replace , "g" );
+	path = path.replace( re , "" );
+	//path = path.replace( /#!\//g,"" );
 	path = path.replace("]","");
 
 	var dependencyArr = path.split("}[");
@@ -509,7 +527,8 @@ RouteState.objectFromPath = function ( path )
 		dependencyArr = [];
 	}
 
-	var pathArr = path.split("/{");
+	//var pathArr = path.split("/{");
+	var pathArr = path.split( RouteState.value_delimiter + "{" );
 	if ( pathArr.length < 2 ) {
 		return routeStateRoute;
 	}
@@ -517,7 +536,8 @@ RouteState.objectFromPath = function ( path )
 	var names = pathArr[1];
 	var vals = pathArr[0];
 
-	var valsArr = vals.split("/");
+	//var valsArr = vals.split("/");
+	var valsArr = vals.split( RouteState.value_delimiter );
 	var namesArr = names.split(",");
 
 	var state = {};
@@ -828,8 +848,58 @@ RouteStateRoute.prototype.toHash = function () {
 	RouteState.target_document.location.hash = routeStr;
 };
 
+
+
 // ===========SERIALIZERS==================
+
+String.prototype.hashCode = function() {
+	var hash = 0, i, chr, len;
+	if (this.length === 0) return hash;
+	for (i = 0, len = this.length; i < len; i++) {
+		chr   = this.charCodeAt(i);
+		hash  = ((hash << 5) - hash) + chr;
+		hash |= 0; // Convert to 32bit integer
+	}
+	return hash;
+};
+
+/**
+ * Calculate a 32 bit FNV-1a hash
+ * Found here: https://gist.github.com/vaiorabbit/5657561
+ * Ref.: http://isthe.com/chongo/tech/comp/fnv/
+ *
+ * @param {string} str the input value
+ * @param {boolean} [asString=false] set to true to return the hash value as
+ *     8-digit hex string instead of an integer
+ * @param {integer} [seed] optionally pass the hash of the previous chunk
+ * @returns {integer | string}
+ */
+function hashFnv32a(str, asString, seed) {
+    /*jshint bitwise:false */
+    var i, l,
+        hval = (seed === undefined) ? 0x811c9dc5 : seed;
+
+    for (i = 0, l = str.length; i < l; i++) {
+        hval ^= str.charCodeAt(i);
+        hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
+    }
+    if( asString ){
+        // Convert to 8 digit hex string
+        return ("0000000" + (hval >>> 0).toString(16)).substr(-8);
+    }
+    return hval >>> 0;
+}
+
 RouteStateRoute.prototype.toHashString = function () {
+
+	if ( RouteState.use_json ) {
+		var routeObj = this.toObject();
+		return "#!" + JSON.stringify( routeObj );
+	}
+
+	var routeObj = this.toObject();
+	console.log( JSON.stringify( routeObj ).hashCode() );
+	console.log( "hs ", hashFnv32a( routeObj ) );
 
 	var route_config;
 	var routeObj = this.toObject();
@@ -864,9 +934,11 @@ RouteStateRoute.prototype.toHashString = function () {
 				weight:weight
 			});
 		}else{
+			var replace = RouteState.regExpQuote( RouteState.value_delimiter );
+			var re = new RegExp( replace , "g" );
 			routeArr.push({
 				name:name,
-				val:routeObj[name],
+				val:routeObj[name].replace( re , "/" + RouteState.value_delimiter ),
 				weight:weight
 			});
 		}
@@ -892,12 +964,6 @@ RouteStateRoute.prototype.toHashString = function () {
 			nameArr.push( value.name );
 			valArr.push( value.val );
 			nameLookup[ value.name ] = index;
-
-			/*if ( RouteState.config && RouteState.config[value.name] ) {
-				dependancyArr.push( RouteState.config[value.name].dependency );
-			}else{
-				dependancyArr.push( "" );
-			}*/
 		}
 	);
 
@@ -926,9 +992,13 @@ RouteStateRoute.prototype.toHashString = function () {
 
 	if ( valArr.length > 0 ) {
 		if ( show_dependencies ) {
-			return "#!/" + valArr.join("/") + "/{" + nameArr.join(",") + "}[" + dependancyArr.join(",") + "]";
+			//return "#!/" + valArr.join("/") + "/{" + nameArr.join(",") + "}[" + dependancyArr.join(",") + "]";
+			return "#!" + RouteState.value_delimiter + valArr.join(RouteState.value_delimiter) +
+							RouteState.value_delimiter + "{" + nameArr.join(",") + "}[" + dependancyArr.join(",") + "]";
 		}else{
-			return "#!/" + valArr.join("/") + "/{" + nameArr.join(",") + "}";
+			//return "#!/" + valArr.join("/") + "/{" + nameArr.join(",") + "}";
+			return "#!" + RouteState.value_delimiter + valArr.join(RouteState.value_delimiter) +
+							RouteState.value_delimiter +"{" + nameArr.join(",") + "}";
 		}
 	}else{
 		return "";

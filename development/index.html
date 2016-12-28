@@ -71,6 +71,8 @@
 
 		<script>
 			$(window).ready( function () {
+
+				//RouteState.value_delimiter = "|";
 				RouteState.config( route_config );
 				RouteState.listenToHash( function ( route , prev_route ) {
 					console.log( 'hash changed index' );
@@ -126,6 +128,12 @@
 		</div>
 		<div onclick="RouteState.merge({page:''})">
 			RouteState.merge({page:''})
+		</div>
+		<div onclick='RouteState.merge({page:"break/\"this"})'>
+			RouteState.merge({page:'break/this'})
+		</div>
+		<div onclick="RouteState.merge({'page:do':'something'}); console.log( RouteState.config );">
+			RouteState.merge({'page:do':'something'})
 		</div>
 		<div onclick="RouteState.toggle({last:'last'},{last:''})">
 			RouteState.toggle({last:'last'},{last:''})
