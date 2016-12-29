@@ -33,6 +33,13 @@ RouteState.listenToHash = function ( funk, is_root )
 	this.target_document = document;
 
 	this.route_stack = [];// routes can nest in a stack of routes
+	if ( window.localStorage && window.JSON ) {
+		var localStack = localStorage.getItem(
+			"RouteStateRouteStack"
+		);
+		if ( localStack )
+			this.route_stack = JSON.parse( localStack );
+	}
 
 	var is_topmost_window = true;
 
@@ -134,7 +141,7 @@ RouteState.listenToHash = function ( funk, is_root )
 		// });
 		this.target_window.RouteState.hashchanged_initialized = true;
 
-		if ( RouteState.sustain_hash_history && localStorage ) {
+		if ( RouteState.sustain_hash_history && window.localStorage ) {
 			RouteState.session_prev_route = {};
 			var tag = RouteState.LAST_SESSION_TAG;
 			RouteState.session_prev_route.route = localStorage.getItem(
@@ -217,7 +224,7 @@ RouteState.tagSessionRoute = function ( tag_name ) {
 	this.saveSessionRoute( tag_name );
 }
 	RouteState.saveSessionRoute = function ( tag_name ) {
-		if ( localStorage ) {
+		if ( window.localStorage ) {
 			if ( !tag_name ) {
 				tag_name = RouteState.LAST_SESSION_TAG;
 			}
@@ -820,19 +827,29 @@ RouteState.debug = function ()
 // ===========ROUTE STACK==================
 RouteState.push = function () {
 	this.route_stack.push( this.route.clone() );
+	if ( window.localStorage && window.JSON ) {
+		localStorage.setItem(
+			"RouteStateRouteStack",
+			JSON.stringify( this.route_stack )
+		);
+	}
 	return this;
 };
 
 RouteState.pop = function () {
 	if ( this.route_stack.length > 0 ) {
 		this.replace( this.route_stack.pop() );
+		if ( window.localStorage && window.JSON ) {
+			localStorage.setItem(
+				"RouteStateRouteStack",
+				JSON.stringify( this.route_stack )
+			);
+		}
 	}else{
 		console.log("RouteState: nothing left in the stack.");
 	}
 	return this;
 };
-
-
 
 
 
@@ -848,8 +865,6 @@ RouteStateRoute.prototype.toHash = function () {
 	RouteState.target_document.location.hash = routeStr;
 };
 
-
-
 // ===========SERIALIZERS==================
 
 String.prototype.hashCode = function() {
@@ -863,33 +878,6 @@ String.prototype.hashCode = function() {
 	return hash;
 };
 
-/**
- * Calculate a 32 bit FNV-1a hash
- * Found here: https://gist.github.com/vaiorabbit/5657561
- * Ref.: http://isthe.com/chongo/tech/comp/fnv/
- *
- * @param {string} str the input value
- * @param {boolean} [asString=false] set to true to return the hash value as
- *     8-digit hex string instead of an integer
- * @param {integer} [seed] optionally pass the hash of the previous chunk
- * @returns {integer | string}
- */
-function hashFnv32a(str, asString, seed) {
-    /*jshint bitwise:false */
-    var i, l,
-        hval = (seed === undefined) ? 0x811c9dc5 : seed;
-
-    for (i = 0, l = str.length; i < l; i++) {
-        hval ^= str.charCodeAt(i);
-        hval += (hval << 1) + (hval << 4) + (hval << 7) + (hval << 8) + (hval << 24);
-    }
-    if( asString ){
-        // Convert to 8 digit hex string
-        return ("0000000" + (hval >>> 0).toString(16)).substr(-8);
-    }
-    return hval >>> 0;
-}
-
 RouteStateRoute.prototype.toHashString = function () {
 
 	if ( RouteState.use_json ) {
@@ -898,8 +886,6 @@ RouteStateRoute.prototype.toHashString = function () {
 	}
 
 	var routeObj = this.toObject();
-	console.log( JSON.stringify( routeObj ).hashCode() );
-	console.log( "hs ", hashFnv32a( routeObj ) );
 
 	var route_config;
 	var routeObj = this.toObject();
