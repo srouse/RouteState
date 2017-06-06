@@ -12,9 +12,8 @@
 		<meta name="apple-mobile-web-app-status-bar-style" content="white-translucent">
 		<meta name="viewport" content="user-scalable=no,width=device-width,initial-scale=1.0,maximum-scale=1.0" />
 
-
-		<script src="js/jquery.min.js"></script>
-		<script src="../RouteState.js"></script>
+    <script src="js/jquery.min.js"></script>
+		<script src="../lib/index.js"></script>
 		<script src="routing_config.js"></script>
 
 		<style>
@@ -70,7 +69,8 @@
 		</style>
 
 		<script>
-			$(window).ready( function () {
+			// $(window).ready( function () {
+      window.addEventListener('load', () => {
 
 				//RouteState.value_delimiter = "|";
 				RouteState.config( route_config );
