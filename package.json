@@ -1,23 +1,42 @@
 {
-	"name": "routestate",
-	"description": "RouteState is a flexible path router (designed for prototyping) that serializes it's state into the path as well as into the class of the body.",
-	"author": "srouse",
-	"version": "0.4.11",
-	"dependencies": {
-		"jquery": "~1.11"
-	},
-	"devDependencies": {},
-	"main": "RouteState.js",
-	"scripts": {
-	    "test": "echo \"Error: no test specified\" && exit 1"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://srouse@github.com/srouse/RouteState.git"
-	},
-	"license": "ISC",
-	"bugs": {
-		"url": "https://github.com/srouse/RouteState/issues"
-	},
-	"homepage": "https://github.com/srouse/RouteState"
+  "name": "routestate",
+  "version": "0.5.0",
+  "description": "RouteState is a flexible path router (designed for prototyping) that serializes it's state into the path as well as into the class of the body.",
+  "homepage": "https://github.com/srouse/RouteState",
+  "author": {
+    "name": "EarthlingInteractive",
+    "email": "",
+    "url": ""
+  },
+  "files": [
+    "lib"
+  ],
+  "main": "lib/index.js",
+  "keywords": [
+    ""
+  ],
+  "devDependencies": {
+    "nsp": "^2.6.3",
+    "eslint": "^3.18.0",
+    "eslint-config-xo-space": "^0.16.0",
+    "jest": "^19.0.2",
+    "jest-cli": "^20.0.0"
+  },
+  "scripts": {
+    "prepublish": "nsp check",
+    "pretest": "eslint . --fix",
+    "test": "jest"
+  },
+  "eslintConfig": {
+    "extends": "xo-space",
+    "env": {
+      "jest": true,
+      "node": true
+    }
+  },
+  "repository": "https://github.com/EarthlingInteractive/design-starter-kit.git",
+  "jest": {
+    "testEnvironment": "node"
+  },
+  "license": "ISC"
 }
