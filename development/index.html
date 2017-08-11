@@ -77,6 +77,10 @@
 				RouteState.listenToHash( function ( route , prev_route ) {
 					console.log( 'hash changed index' );
 				});
+				RouteState.errorFunk = function ( error ) {
+					console.log("end of stack");
+					RouteState.replace({});
+				};
 
 				document.difflistener_id = RouteState.addDiffListener(
 					"last",
