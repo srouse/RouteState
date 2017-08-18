@@ -4,7 +4,7 @@
   "description": "RouteState is a flexible path router (designed for prototyping) that serializes it's state into the path as well as into the class of the body.",
   "homepage": "https://github.com/srouse/RouteState",
   "author": {
-    "name": "EarthlingInteractive",
+    "name": "Scott Rouse",
     "email": "",
     "url": ""
   },
@@ -21,22 +21,6 @@
     "eslint-config-xo-space": "^0.16.0",
     "jest": "^19.0.2",
     "jest-cli": "^20.0.0"
-  },
-  "scripts": {
-    "prepublish": "nsp check",
-    "pretest": "eslint . --fix",
-    "test": "jest"
-  },
-  "eslintConfig": {
-    "extends": "xo-space",
-    "env": {
-      "jest": true,
-      "node": true
-    }
-  },
-  "repository": "https://github.com/EarthlingInteractive/design-starter-kit.git",
-  "jest": {
-    "testEnvironment": "node"
   },
   "license": "ISC"
 }
