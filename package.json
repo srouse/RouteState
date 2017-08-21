@@ -1,6 +1,6 @@
 {
   "name": "routestate",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "RouteState is a flexible path router (designed for prototyping) that serializes it's state into the path as well as into the class of the body.",
   "homepage": "https://github.com/srouse/RouteState",
   "author": {
