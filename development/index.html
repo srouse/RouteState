@@ -133,14 +133,17 @@
 		<div onclick="RouteState.merge({page:''})">
 			RouteState.merge({page:''})
 		</div>
-		<div onclick='RouteState.merge({page:"break/\"this"})'>
-			RouteState.merge({page:'break/this'})
-		</div>
 		<div onclick="RouteState.merge({'page:do':'something'}); console.log( RouteState.config );">
 			RouteState.merge({'page:do':'something'})
 		</div>
 		<div onclick="RouteState.toggle({last:'last'},{last:''})">
 			RouteState.toggle({last:'last'},{last:''})
+		</div>
+		<div onclick="RouteState.toggle({page:'green'},{page:'red'})">
+			RouteState.toggle({page:'green'},{page:'red'})
+		</div>
+		<div onclick="RouteState.merge({'last:page':'green'})">
+			RouteState.merge({'last:page':'green'})
 		</div>
 		<div onclick="RouteState.toggle({dogfur:'smells_good'},{dogfur:''})">
 			RouteState.toggle({dogfur:'smells_good'},{dogfur:''})
@@ -201,6 +204,9 @@
 		</div>
 		<div onclick="RouteState.removeDiffListenersViaClusterId('MAIN')">
 			Destroy Diff via Cluster
+		</div>
+		<div onclick='RouteState.merge({page:"break/\"this"})'>
+			RouteState.merge({page:'break/this'})
 		</div>
 
 		<div onclick="RouteState.removePropValueListener(document.valProplistener_id)">
